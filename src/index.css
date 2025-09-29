@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Deep space dark theme - always dark mode */
+    --background: 222 47% 7%;
+    --foreground: 210 40% 98%;
+
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
+    --card-hover: 222 47% 12%;
+
+    --popover: 222 47% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 200 100% 50%;
+    --primary-foreground: 222 47% 7%;
+    --primary-glow: 200 100% 70%;
+
+    --secondary: 222 47% 15%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 222 47% 15%;
+    --muted-foreground: 215 15% 60%;
+
+    --accent: 200 100% 40%;
+    --accent-foreground: 210 40% 98%;
+
+    --success: 142 76% 46%;
+    --success-foreground: 210 40% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 222 47% 7%;
+
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 222 47% 15%;
+    --input: 222 47% 15%;
+    --ring: 200 100% 50%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 222 47% 5%;
+    --sidebar-foreground: 210 20% 85%;
+    --sidebar-primary: 200 100% 50%;
+    --sidebar-primary-foreground: 222 47% 7%;
+    --sidebar-accent: 222 47% 12%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 47% 12%;
+    --sidebar-ring: 200 100% 50%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(200 100% 50%), hsl(200 100% 70%));
+    --gradient-card: linear-gradient(145deg, hsl(222 47% 12%), hsl(222 47% 8%));
+    --gradient-accent: linear-gradient(90deg, hsl(200 100% 40%), hsl(190 100% 45%));
+    --gradient-radial: radial-gradient(circle at center, hsl(200 100% 50% / 0.1), transparent);
+    --gradient-glass: linear-gradient(135deg, hsl(200 100% 50% / 0.1), hsl(200 100% 50% / 0.02));
+
+    /* Shadows */
+    --shadow-glow: 0 0 40px hsl(200 100% 50% / 0.3);
+    --shadow-card: 0 4px 24px hsl(222 47% 5% / 0.5);
+    --shadow-elevated: 0 10px 40px hsl(222 47% 5% / 0.7);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
