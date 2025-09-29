@@ -1,7 +1,11 @@
-import { Activity, Droplet, MapPin, AlertTriangle, Users, Share2, Building2 } from "lucide-react";
+import { useState } from "react";
+import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 
@@ -36,23 +40,47 @@ const stats = [
   },
 ];
 
-const subAccounts = [
-  { id: 1, name: "John Manager", role: "Regional Manager", devices: 45, shared: 12, status: "active", lastActive: "Online now" },
-  { id: 2, name: "Sarah Admin", role: "Site Administrator", devices: 68, shared: 8, status: "active", lastActive: "5 min ago" },
-  { id: 3, name: "Mike Tech", role: "Technician", devices: 23, shared: 23, status: "active", lastActive: "1 hour ago" },
-  { id: 4, name: "Lisa Operator", role: "Operator", devices: 15, shared: 15, status: "inactive", lastActive: "2 days ago" },
-];
-
-const locationStats = [
-  { name: "Main Office", devices: 45, avgFuel: 82, lowFuel: 2, offline: 1 },
-  { name: "Lobby Area", devices: 32, avgFuel: 75, lowFuel: 1, offline: 0 },
-  { name: "Conference Rooms", devices: 28, avgFuel: 68, lowFuel: 3, offline: 0 },
-  { name: "Reception", devices: 15, avgFuel: 90, lowFuel: 0, offline: 1 },
-  { name: "Executive Floor", devices: 22, avgFuel: 85, lowFuel: 1, offline: 0 },
-  { name: "Cafeteria", devices: 18, avgFuel: 60, lowFuel: 2, offline: 0 },
+const devicesData = [
+  { id: "1", name: "Reception Area Diffuser", location: "Main Office", status: "online", oilLevel: 85 },
+  { id: "2", name: "Conference Room Alpha", location: "Main Office", status: "online", oilLevel: 72 },
+  { id: "3", name: "Lobby Central Unit", location: "Lobby Area", status: "offline", oilLevel: 0 },
+  { id: "4", name: "Executive Suite Diffuser", location: "Executive Floor", status: "online", oilLevel: 15 },
+  { id: "5", name: "Cafeteria Corner Unit", location: "Cafeteria", status: "online", oilLevel: 45 },
+  { id: "6", name: "Conference Room Beta", location: "Main Office", status: "online", oilLevel: 90 },
+  { id: "7", name: "Reception Waiting Area", location: "Reception", status: "offline", oilLevel: 5 },
+  { id: "8", name: "VIP Lounge Diffuser", location: "Executive Floor", status: "online", oilLevel: 68 },
+  { id: "9", name: "Main Hallway Unit 1", location: "Main Office", status: "online", oilLevel: 35 },
+  { id: "10", name: "Main Hallway Unit 2", location: "Main Office", status: "online", oilLevel: 20 },
+  { id: "11", name: "Break Room Diffuser", location: "Cafeteria", status: "online", oilLevel: 55 },
+  { id: "12", name: "Guest Reception Unit", location: "Reception", status: "online", oilLevel: 80 },
 ];
 
 export default function Dashboard() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  // Filter devices based on search and status
+  const filteredDevices = devicesData.filter(device => {
+    const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         device.location.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || 
+                         statusFilter === device.status ||
+                         (statusFilter === "low oil" && device.oilLevel <= 20);
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    return status === "online" ? "success" : "destructive";
+  };
+
+  const getOilLevelBadge = (level: number) => {
+    if (level <= 20) return "destructive";
+    if (level <= 50) return "warning";
+    return "success";
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-lg">
@@ -96,104 +124,102 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Sub Accounts */}
-          <Card className="lg:col-span-2 border-border/50 bg-gradient-card backdrop-blur-sm animate-fade-in">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5 text-primary" />
-                  <h2 className="text-lg font-semibold">Sub Accounts</h2>
+        {/* Devices Table */}
+        <Card className="border-border/50 bg-gradient-card backdrop-blur-sm animate-fade-in">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Droplet className="w-5 h-5 text-primary" />
+                <h2 className="text-lg font-semibold">Devices Management</h2>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search devices..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-64 bg-background/50 border-border"
+                  />
                 </div>
-                <Button variant="outline" size="sm">Manage Users</Button>
-              </div>
-              <div className="space-y-3">
-                {subAccounts.map((account) => (
-                  <div
-                    key={account.id}
-                    className={cn(
-                      "flex items-center justify-between p-4 rounded-lg",
-                      "bg-background/50 hover:bg-card",
-                      "transition-colors duration-200 border border-border/50"
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-full flex items-center justify-center",
-                        "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground font-semibold"
-                      )}>
-                        {account.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{account.name}</p>
-                        <p className="text-xs text-muted-foreground">{account.role}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="flex items-center gap-2 text-xs">
-                          <Droplet className="w-3 h-3" />
-                          <span>{account.devices} devices</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Share2 className="w-3 h-3" />
-                          <span>{account.shared} shared</span>
-                        </div>
-                      </div>
-                      <Badge variant={account.status === "active" ? "success" : "secondary"} className="text-xs">
-                        {account.lastActive}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40 bg-background/50 border-border">
+                    <Filter className="w-4 h-4 mr-2" />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
+                    <SelectItem value="low oil">Low Oil</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </Card>
 
-          {/* Location-wise Device Stats */}
-          <Card className="border-border/50 bg-gradient-card backdrop-blur-sm animate-fade-in">
-            <div className="p-6">
-              <div className="flex items-center gap-2 mb-4">
-                <Building2 className="w-5 h-5 text-primary" />
-                <h2 className="text-lg font-semibold">Location Stats</h2>
-              </div>
-              <div className="space-y-3">
-                {locationStats.map((location) => (
-                  <div key={location.name} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">{location.name}</span>
-                      <Badge variant="outline" className="text-xs">
-                        {location.devices} devices
-                      </Badge>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs">
-                      <div className="flex flex-col items-center p-2 rounded-lg bg-background/50">
-                        <span className="text-muted-foreground">Avg Fuel</span>
-                        <span className="font-semibold text-sm">{location.avgFuel}%</span>
-                      </div>
-                      <div className="flex flex-col items-center p-2 rounded-lg bg-background/50">
-                        <span className="text-muted-foreground">Low Fuel</span>
-                        <span className={cn(
-                          "font-semibold text-sm",
-                          location.lowFuel > 0 && "text-warning"
-                        )}>{location.lowFuel}</span>
-                      </div>
-                      <div className="flex flex-col items-center p-2 rounded-lg bg-background/50">
-                        <span className="text-muted-foreground">Offline</span>
-                        <span className={cn(
-                          "font-semibold text-sm",
-                          location.offline > 0 && "text-destructive"
-                        )}>{location.offline}</span>
-                      </div>
-                    </div>
-                    <Progress value={location.avgFuel} className="h-1" />
-                  </div>
-                ))}
-              </div>
+            <div className="rounded-lg border border-border/50 bg-background/30 backdrop-blur-sm overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent border-border/50">
+                    <TableHead className="font-semibold">Device Name</TableHead>
+                    <TableHead className="font-semibold">Location</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Oil Level</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDevices.map((device, index) => (
+                    <TableRow 
+                      key={device.id} 
+                      className={cn(
+                        "border-border/50 hover:bg-card/50 transition-colors duration-200",
+                        "animate-fade-in"
+                      )}
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
+                      <TableCell className="font-medium">{device.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <MapPin className="w-4 h-4 text-muted-foreground" />
+                          {device.location}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusBadge(device.status)} className="capitalize">
+                          {device.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 max-w-20">
+                            <Progress 
+                              value={device.oilLevel} 
+                              className="h-2"
+                            />
+                          </div>
+                          <Badge variant={getOilLevelBadge(device.oilLevel)} className="min-w-12 text-center">
+                            {device.oilLevel}%
+                          </Badge>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              
+              {filteredDevices.length === 0 && (
+                <div className="text-center py-12">
+                  <Droplet className="w-16 h-16 mx-auto text-muted-foreground mb-4 opacity-50" />
+                  <p className="text-xl text-muted-foreground mb-2">No devices found</p>
+                  <p className="text-sm text-muted-foreground">
+                    {searchQuery ? `Try adjusting your search for "${searchQuery}"` : "No devices match the selected filter"}
+                  </p>
+                </div>
+              )}
             </div>
-          </Card>
-        </div>
+          </div>
+        </Card>
       </main>
     </div>
   );

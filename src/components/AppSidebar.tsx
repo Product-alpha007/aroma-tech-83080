@@ -17,9 +17,6 @@ const navigation = [
   { title: "Dashboard", url: "/", icon: Home },
   { title: "Devices", url: "/devices", icon: Cpu },
   { title: "Users", url: "/users", icon: Users },
-  { title: "Analytics", url: "/analytics", icon: Activity },
-  { title: "Inventory", url: "/inventory", icon: Package },
-  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
