@@ -22,11 +22,13 @@ interface Schedule {
 }
 
 interface BulkScheduleModalProps {
-  onApplySchedules?: (schedules: Schedule[]) => void;
+  devices?: Array<{ id: string; name: string; location: string }>;
+  onApplySchedules?: (schedules: Schedule[], deviceIds: string[]) => void;
 }
 
-export function BulkScheduleModal({ onApplySchedules }: BulkScheduleModalProps) {
+export function BulkScheduleModal({ devices = [], onApplySchedules }: BulkScheduleModalProps) {
   const [open, setOpen] = useState(false);
+  const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
   const [schedules, setSchedules] = useState<Schedule[]>([
     {
       id: "1",
@@ -158,14 +160,39 @@ export function BulkScheduleModal({ onApplySchedules }: BulkScheduleModalProps) 
     setSchedules(prev => prev.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s));
   };
 
+  const toggleDeviceSelection = (deviceId: string) => {
+    setSelectedDeviceIds(prev => 
+      prev.includes(deviceId) 
+        ? prev.filter(id => id !== deviceId)
+        : [...prev, deviceId]
+    );
+  };
+
+  const toggleAllDevices = () => {
+    if (selectedDeviceIds.length === devices.length) {
+      setSelectedDeviceIds([]);
+    } else {
+      setSelectedDeviceIds(devices.map(d => d.id));
+    }
+  };
+
   const handleApplyAll = () => {
+    if (selectedDeviceIds.length === 0) {
+      toast({
+        title: "No Devices Selected",
+        description: "Please select at least one device",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (onApplySchedules) {
-      onApplySchedules(schedules.filter(s => s.enabled));
+      onApplySchedules(schedules.filter(s => s.enabled), selectedDeviceIds);
     }
     setOpen(false);
     toast({
       title: "Schedules Applied",
-      description: `${schedules.filter(s => s.enabled).length} schedule(s) applied to selected devices`
+      description: `Applied ${schedules.filter(s => s.enabled).length} schedule(s) to ${selectedDeviceIds.length} device(s)`
     });
   };
 
@@ -183,6 +210,39 @@ export function BulkScheduleModal({ onApplySchedules }: BulkScheduleModalProps) 
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+          {/* Device Selection */}
+          {devices.length > 0 && (
+            <Card className="p-4 bg-gradient-card border-border/50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold">Select Devices ({selectedDeviceIds.length}/{devices.length})</h3>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={toggleAllDevices}
+                >
+                  {selectedDeviceIds.length === devices.length ? "Deselect All" : "Select All"}
+                </Button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                {devices.map(device => (
+                  <div 
+                    key={device.id} 
+                    className="flex items-center gap-2 p-2 rounded hover:bg-background/50 transition-colors"
+                  >
+                    <Checkbox
+                      checked={selectedDeviceIds.includes(device.id)}
+                      onCheckedChange={() => toggleDeviceSelection(device.id)}
+                    />
+                    <label className="flex-1 cursor-pointer text-sm">
+                      <span className="font-medium">{device.name}</span>
+                      <span className="text-muted-foreground ml-2">• {device.location}</span>
+                    </label>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           {/* Add Schedule Button */}
           {!showAddForm && !editingSchedule && (
             <Button 
@@ -461,10 +521,15 @@ export function BulkScheduleModal({ onApplySchedules }: BulkScheduleModalProps) 
         </div>
 
         <DialogFooter className="gap-2">
+          <div className="flex items-center gap-2 mr-auto text-sm text-muted-foreground">
+            {selectedDeviceIds.length > 0 && (
+              <span>{selectedDeviceIds.length} device(s) selected</span>
+            )}
+          </div>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={handleApplyAll}>
+          <Button onClick={handleApplyAll} disabled={selectedDeviceIds.length === 0}>
             Apply to Selected Devices
           </Button>
         </DialogFooter>

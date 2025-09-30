@@ -260,7 +260,7 @@ export default function Devices() {
                 locations={locations}
                 onAddLocation={handleAddLocation}
               />
-              <BulkScheduleModal />
+              <BulkScheduleModal devices={devices} />
               <BulkOperationsModal onBulkUpload={handleBulkUpload} />
               <LocationManagerModal
                 locations={locationStats}

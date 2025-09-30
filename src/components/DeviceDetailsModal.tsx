@@ -11,7 +11,7 @@ import {
   Edit2,
   Save
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,9 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
   const [showFanSelector, setShowFanSelector] = useState(false);
   const [showWorkModeForm, setShowWorkModeForm] = useState(false);
   const [editingFuelRate, setEditingFuelRate] = useState(false);
+  const [showFuelRateDialog, setShowFuelRateDialog] = useState(false);
   const [fuelRate, setFuelRate] = useState(parseInt(device.fuelRate.replace(/\D/g, '')));
+  const [tempFuelRate, setTempFuelRate] = useState(fuelRate);
   const [workModes, setWorkModes] = useState<WorkMode[]>([
     {
       id: 1,
@@ -138,6 +140,20 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
     toast({
       title: "Fuel Rate Updated",
       description: `Consumption rate set to ${fuelRate} mL/Hr`
+    });
+  };
+
+  const handleOpenFuelRateDialog = () => {
+    setTempFuelRate(fuelRate);
+    setShowFuelRateDialog(true);
+  };
+
+  const handleSaveFuelRateDialog = () => {
+    setFuelRate(tempFuelRate);
+    setShowFuelRateDialog(false);
+    toast({
+      title: "Consumption Rate Updated",
+      description: `Set to ${tempFuelRate} mL/Hr`
     });
   };
 
@@ -321,8 +337,11 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
                   <p className="text-sm font-medium">{device.fuelCapacity} ML</p>
                   <p className="text-xs text-muted-foreground">Total</p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium">{fuelRate} mL/Hr</p>
+                <div 
+                  className="cursor-pointer hover:bg-background/50 rounded-lg py-1 transition-colors"
+                  onClick={handleOpenFuelRateDialog}
+                >
+                  <p className="text-sm font-medium text-primary">{fuelRate} mL/Hr</p>
                   <p className="text-xs text-muted-foreground">Consumption</p>
                 </div>
                 <div>
@@ -559,6 +578,50 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Fuel Rate Edit Dialog */}
+        <Dialog open={showFuelRateDialog} onOpenChange={setShowFuelRateDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Consumption Rate</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="consumption-rate">Consumption Rate (mL/Hr)</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="consumption-rate"
+                    type="number"
+                    value={tempFuelRate}
+                    onChange={(e) => setTempFuelRate(Number(e.target.value))}
+                    className="flex-1"
+                    min="1"
+                    max="100"
+                  />
+                  <span className="text-muted-foreground">mL/Hr</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Set the fuel consumption rate for this device
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowFuelRateDialog(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSaveFuelRateDialog}
+                className="flex-1"
+              >
+                Save Changes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
