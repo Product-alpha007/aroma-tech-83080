@@ -22,7 +22,6 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,112 +47,18 @@ import {
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  role: string;
-  department: string;
-  location: string;
-  status: "active" | "inactive";
-  lastActive: string;
-  joinedDate: string;
-  devicesAssigned: number;
-  devicesShared: number;
-  permissions: string[];
-}
-
-interface Device {
-  id: string;
-  name: string;
-  deviceId: string;
-  location: string;
-  assigned: boolean;
-}
+import { useUsers } from "@/contexts/UserContext";
 
 export default function ManageUsers() {
+  const { users, addUser, updateUser, removeUser } = useUsers();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showManageDevicesDialog, setShowManageDevicesDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
-
-  // Sample data
-  const [users] = useState<User[]>([
-    {
-      id: "1",
-      name: "John Manager",
-      email: "john.manager@company.com",
-      phone: "+1 234 567 8901",
-      role: "Regional Manager",
-      department: "Operations",
-      location: "New York Office",
-      status: "active",
-      lastActive: "Online now",
-      joinedDate: "2023-01-15",
-      devicesAssigned: 45,
-      devicesShared: 12,
-      permissions: ["view", "edit", "share", "manage"]
-    },
-    {
-      id: "2",
-      name: "Sarah Admin",
-      email: "sarah.admin@company.com",
-      phone: "+1 234 567 8902",
-      role: "Site Administrator",
-      department: "Facilities",
-      location: "Los Angeles Office",
-      status: "active",
-      lastActive: "5 min ago",
-      joinedDate: "2023-03-20",
-      devicesAssigned: 68,
-      devicesShared: 8,
-      permissions: ["view", "edit", "share"]
-    },
-    {
-      id: "3",
-      name: "Mike Tech",
-      email: "mike.tech@company.com",
-      phone: "+1 234 567 8903",
-      role: "Technician",
-      department: "Maintenance",
-      location: "Chicago Office",
-      status: "active",
-      lastActive: "1 hour ago",
-      joinedDate: "2023-06-10",
-      devicesAssigned: 23,
-      devicesShared: 23,
-      permissions: ["view", "edit"]
-    },
-    {
-      id: "4",
-      name: "Lisa Operator",
-      email: "lisa.operator@company.com",
-      phone: "+1 234 567 8904",
-      role: "Operator",
-      department: "Operations",
-      location: "Houston Office",
-      status: "inactive",
-      lastActive: "2 days ago",
-      joinedDate: "2023-09-05",
-      devicesAssigned: 15,
-      devicesShared: 15,
-      permissions: ["view"]
-    }
-  ]);
-
-  const [devices] = useState<Device[]>([
-    { id: "1", name: "Lobby Diffuser #001", deviceId: "LOB001", location: "Main Lobby", assigned: false },
-    { id: "2", name: "Conference Room #002", deviceId: "CON002", location: "Conference Room A", assigned: true },
-    { id: "3", name: "Office Diffuser #003", deviceId: "OFF003", location: "Open Office Area", assigned: false },
-    { id: "4", name: "Reception #004", deviceId: "REC004", location: "Reception Desk", assigned: true },
-    { id: "5", name: "Executive #005", deviceId: "EXE005", location: "Executive Suite", assigned: false },
-  ]);
 
   const [newUser, setNewUser] = useState({
     name: "",
@@ -166,20 +71,17 @@ export default function ManageUsers() {
   });
 
   const roles = [
-    "Regional Manager",
-    "Site Administrator",
-    "Technician",
-    "Operator",
+    "Admin",
+    "Manager", 
+    "User",
     "Viewer"
   ];
 
   const permissions = [
-    { id: "view", label: "View Devices", description: "Can view device status and data" },
-    { id: "edit", label: "Edit Settings", description: "Can modify device settings" },
-    { id: "share", label: "Share Access", description: "Can share devices with others" },
-    { id: "manage", label: "Manage Users", description: "Can add/remove users" },
-    { id: "maintenance", label: "Maintenance", description: "Can perform maintenance tasks" },
-    { id: "reports", label: "Reports", description: "Can generate and view reports" }
+    { id: "read", label: "View Devices", description: "Can view device status and data" },
+    { id: "write", label: "Edit Settings", description: "Can modify device settings" },
+    { id: "delete", label: "Delete Access", description: "Can delete devices and data" },
+    { id: "admin", label: "Admin Access", description: "Full administrative privileges" }
   ];
 
   const filteredUsers = users.filter(user => {
@@ -190,7 +92,9 @@ export default function ManageUsers() {
   });
 
   const handleAddUser = () => {
-    // Add user logic here
+    if (!newUser.name || !newUser.email || !newUser.location) return;
+    
+    addUser(newUser);
     setShowAddUserDialog(false);
     setNewUser({
       name: "",
@@ -203,19 +107,22 @@ export default function ManageUsers() {
     });
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = (user: any) => {
     setSelectedUser(user);
     setShowEditUserDialog(true);
   };
 
-  const handleDeleteUser = (user: User) => {
+  const handleDeleteUser = (user: any) => {
     setSelectedUser(user);
     setShowDeleteDialog(true);
   };
 
-  const handleManageDevices = (user: User) => {
-    setSelectedUser(user);
-    setShowManageDevicesDialog(true);
+  const confirmDeleteUser = () => {
+    if (selectedUser) {
+      removeUser(selectedUser.id);
+      setShowDeleteDialog(false);
+      setSelectedUser(null);
+    }
   };
 
   return (
@@ -280,13 +187,13 @@ export default function ManageUsers() {
                       "w-12 h-12 rounded-full flex items-center justify-center",
                       "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground font-semibold text-lg"
                     )}>
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {user.name.split(' ').map((n: string) => n[0]).join('')}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-1">
                         <h3 className="font-semibold text-lg">{user.name}</h3>
-                        <Badge variant={user.status === "active" ? "success" : "secondary"}>
-                          {user.status}
+                        <Badge variant={user.status === "active" ? "default" : "secondary"}>
+                          {user.status || "active"}
                         </Badge>
                         <Badge variant="outline" className="hidden sm:inline-flex">
                           {user.role}
@@ -297,10 +204,12 @@ export default function ManageUsers() {
                           <Mail className="w-3 h-3" />
                           {user.email}
                         </div>
-                        <div className="flex items-center gap-1 hidden md:flex">
-                          <Phone className="w-3 h-3" />
-                          {user.phone}
-                        </div>
+                        {user.phone && (
+                          <div className="flex items-center gap-1 hidden md:flex">
+                            <Phone className="w-3 h-3" />
+                            {user.phone}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -314,10 +223,6 @@ export default function ManageUsers() {
                       <DropdownMenuItem onClick={() => handleEditUser(user)}>
                         <Edit className="w-4 h-4 mr-2" />
                         Edit User
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleManageDevices(user)}>
-                        <Droplet className="w-4 h-4 mr-2" />
-                        Manage Devices
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem 
@@ -349,11 +254,13 @@ export default function ManageUsers() {
                   <div className="mt-4 pt-4 border-t border-border/50 animate-fade-in">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Department:</span>
-                          <span className="font-medium">{user.department}</span>
-                        </div>
+                        {user.department && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Building2 className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Department:</span>
+                            <span className="font-medium">{user.department}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-2 text-sm">
                           <MapPin className="w-4 h-4 text-muted-foreground" />
                           <span className="text-muted-foreground">Location:</span>
@@ -361,43 +268,53 @@ export default function ManageUsers() {
                         </div>
                       </div>
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Joined:</span>
-                          <span className="font-medium">{user.joinedDate}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Last Active:</span>
-                          <span className="font-medium">{user.lastActive}</span>
-                        </div>
+                        {user.joinedDate && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Joined:</span>
+                            <span className="font-medium">{user.joinedDate}</span>
+                          </div>
+                        )}
+                        {user.lastActive && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Last Active:</span>
+                            <span className="font-medium">{user.lastActive}</span>
+                          </div>
+                        )}
                       </div>
                       <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Droplet className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Devices:</span>
-                          <span className="font-medium">{user.devicesAssigned} assigned</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Share2 className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Shared:</span>
-                          <span className="font-medium">{user.devicesShared} devices</span>
-                        </div>
+                        {user.devicesAssigned !== undefined && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Droplet className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Devices:</span>
+                            <span className="font-medium">{user.devicesAssigned} assigned</span>
+                          </div>
+                        )}
+                        {user.devicesShared !== undefined && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Share2 className="w-4 h-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Shared:</span>
+                            <span className="font-medium">{user.devicesShared} devices</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shield className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">Permissions:</span>
+                    {user.permissions && user.permissions.length > 0 && (
+                      <div className="mt-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Shield className="w-4 h-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Permissions:</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {user.permissions.map((perm: string) => (
+                            <Badge key={perm} variant="secondary" className="capitalize">
+                              {perm}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {user.permissions.map(perm => (
-                          <Badge key={perm} variant="secondary" className="capitalize">
-                            {perm}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -471,7 +388,7 @@ export default function ManageUsers() {
                   id="department"
                   value={newUser.department}
                   onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                  placeholder="Operations"
+                  placeholder="Engineering"
                 />
               </div>
               <div className="space-y-2">
@@ -484,27 +401,38 @@ export default function ManageUsers() {
                 />
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               <Label>Permissions</Label>
-              <div className="grid grid-cols-2 gap-3">
-                {permissions.map(perm => (
-                  <div key={perm.id} className="flex items-start space-x-2">
+              <div className="grid grid-cols-2 gap-4">
+                {permissions.map(permission => (
+                  <div key={permission.id} className="flex items-start space-x-3 p-3 border rounded-lg">
                     <Checkbox
-                      id={perm.id}
-                      checked={newUser.permissions.includes(perm.id)}
+                      id={permission.id}
+                      checked={newUser.permissions.includes(permission.id)}
                       onCheckedChange={(checked) => {
                         if (checked) {
-                          setNewUser({ ...newUser, permissions: [...newUser.permissions, perm.id] });
+                          setNewUser({
+                            ...newUser,
+                            permissions: [...newUser.permissions, permission.id]
+                          });
                         } else {
-                          setNewUser({ ...newUser, permissions: newUser.permissions.filter(p => p !== perm.id) });
+                          setNewUser({
+                            ...newUser,
+                            permissions: newUser.permissions.filter(p => p !== permission.id)
+                          });
                         }
                       }}
                     />
-                    <div className="space-y-1">
-                      <Label htmlFor={perm.id} className="text-sm font-medium">
-                        {perm.label}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">{perm.description}</p>
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor={permission.id}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {permission.label}
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        {permission.description}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -515,64 +443,14 @@ export default function ManageUsers() {
             <Button variant="outline" onClick={() => setShowAddUserDialog(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddUser}>Add User</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Manage Devices Dialog */}
-      <Dialog open={showManageDevicesDialog} onOpenChange={setShowManageDevicesDialog}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Manage Devices - {selectedUser?.name}</DialogTitle>
-            <DialogDescription>
-              Assign or remove device access for this user
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {devices.map(device => (
-                <div
-                  key={device.id}
-                  className={cn(
-                    "flex items-center justify-between p-3 rounded-lg",
-                    "bg-background/50 hover:bg-card border border-border/50",
-                    "transition-colors duration-200"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    <Checkbox
-                      checked={device.assigned}
-                      onCheckedChange={() => {
-                        // Toggle device assignment logic
-                      }}
-                    />
-                    <div>
-                      <p className="font-medium text-sm">{device.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        ID: {device.deviceId} • {device.location}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge variant={device.assigned ? "default" : "outline"}>
-                    {device.assigned ? "Assigned" : "Not Assigned"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowManageDevicesDialog(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setShowManageDevicesDialog(false)}>
-              Save Changes
+            <Button onClick={handleAddUser}>
+              Add User
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete User Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
           <DialogHeader>
@@ -587,10 +465,7 @@ export default function ManageUsers() {
             </Button>
             <Button 
               variant="destructive" 
-              onClick={() => {
-                // Delete logic here
-                setShowDeleteDialog(false);
-              }}
+              onClick={confirmDeleteUser}
             >
               Remove User
             </Button>

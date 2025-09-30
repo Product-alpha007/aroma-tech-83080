@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, MapPin, Upload, Download, FileText, X, Plus, Edit } from "lucide-react";
+import { User, MapPin, Upload, Download, FileText, X, Plus, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,18 +8,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  department?: string;
-  location: string;
-  role?: string;
-  permissions?: string[];
-}
+import { useUsers, User as UserType } from "@/contexts/UserContext";
 
 interface Device {
   id: string;
@@ -47,11 +38,7 @@ interface UserDeviceMappingModalProps {
 
 export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, onAddLocation }: UserDeviceMappingModalProps) {
   const [open, setOpen] = useState(false);
-  const [users, setUsers] = useState<User[]>([
-    { id: "1", name: "John Doe", email: "john@example.com", phone: "+1234567890", department: "IT", location: "Location A", role: "Admin", permissions: ["read", "write", "delete"] },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+0987654321", department: "HR", location: "Location B", role: "Manager", permissions: ["read", "write"] },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", phone: "+1122334455", department: "Operations", location: "Location A", role: "User", permissions: ["read"] },
-  ]);
+  const { users, addUser, updateUser, removeUser } = useUsers();
   const [mappings, setMappings] = useState<UserDeviceMapping[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
@@ -59,9 +46,10 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
   const [newUser, setNewUser] = useState({ name: "", email: "", department: "", location: "" });
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [editUserModalOpen, setEditUserModalOpen] = useState(false);
   const [editUser, setEditUser] = useState({ role: "", department: "", location: "", permissions: [] as string[] });
+  const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
   const { toast } = useToast();
 
   const availableDevices = devices.filter(device => 
@@ -160,23 +148,21 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
       return;
     }
 
-    const user: User = {
-      id: Date.now().toString(),
+    addUser({
       ...newUser,
       role: "User",
       permissions: ["read"],
-    };
+    });
 
-    setUsers(prev => [...prev, user]);
     setNewUser({ name: "", email: "", department: "", location: "" });
 
     toast({
       title: "User Added",
-      description: `${user.name} has been added successfully`,
+      description: `${newUser.name} has been added successfully`,
     });
   };
 
-  const handleEditUser = (user: User) => {
+  const handleEditUser = (user: UserType) => {
     setEditingUser(user);
     setEditUser({
       role: user.role || "",
@@ -199,22 +185,20 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
 
     if (!editingUser) return;
 
-    const updatedUser: User = {
-      ...editingUser,
+    updateUser(editingUser.id, {
       role: editUser.role,
       department: editUser.department,
       location: editUser.location,
       permissions: editUser.permissions,
-    };
+    });
 
-    setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
     setEditingUser(null);
     setEditUser({ role: "", department: "", location: "", permissions: [] });
     setEditUserModalOpen(false);
 
     toast({
       title: "User Updated",
-      description: `${updatedUser.name} has been updated successfully`,
+      description: `${editingUser.name} has been updated successfully`,
     });
   };
 
@@ -222,6 +206,21 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
     setEditingUser(null);
     setEditUser({ role: "", department: "", location: "", permissions: [] });
     setEditUserModalOpen(false);
+  };
+
+  const handleRemoveUser = (user: UserType) => {
+    setUserToDelete(user);
+  };
+
+  const confirmRemoveUser = () => {
+    if (userToDelete) {
+      removeUser(userToDelete.id);
+      setUserToDelete(null);
+      toast({
+        title: "User Removed",
+        description: `${userToDelete.name} has been removed successfully`,
+      });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -562,14 +561,22 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                              {user.location}
                            </Badge>
                          </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          onClick={() => handleEditUser(user)}
-                          title="Edit user"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                         <Button
+                           size="icon"
+                           variant="ghost"
+                           onClick={() => handleEditUser(user)}
+                           title="Edit user"
+                         >
+                           <Edit className="w-4 h-4" />
+                         </Button>
+                         <Button
+                           size="icon"
+                           variant="ghost"
+                           onClick={() => handleRemoveUser(user)}
+                           title="Remove user"
+                         >
+                           <Trash2 className="w-4 h-4 text-destructive" />
+                         </Button>
                       </div>
                     </div>
                   </Card>
@@ -737,6 +744,27 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Remove User Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={() => setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove User</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {userToDelete?.name}? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmRemoveUser}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove User
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
