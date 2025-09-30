@@ -262,7 +262,7 @@ export default function Devices() {
               
               {/* Action Buttons - Scrollable on mobile */}
               <div className="w-full overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="flex gap-2 min-w-max">
+                <div className="flex gap-2 min-w-max pr-4 sm:pr-0">
                   <UserDeviceMappingModal 
                     devices={devices} 
                     locations={locations}
