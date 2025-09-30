@@ -230,13 +230,15 @@ export default function Devices() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Devices & Locations</h1>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <h1 className="text-xl sm:text-2xl font-bold">Devices & Locations</h1>
+            
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
+              <div className="flex items-center gap-2 flex-1 sm:flex-none">
                 <Select value={searchType} onValueChange={(value: "devices" | "locations") => setSearchType(value)}>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-28 sm:w-32">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -244,41 +246,47 @@ export default function Devices() {
                     <SelectItem value="locations">Locations</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="relative">
+                <div className="relative flex-1 sm:w-48 lg:w-64">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="search"
                     placeholder={`Search ${searchType}...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64 bg-background/50 border-border"
+                    className="pl-10 w-full bg-background/50 border-border"
                   />
                 </div>
               </div>
-              <UserDeviceMappingModal 
-                devices={devices} 
-                locations={locations}
-                onAddLocation={handleAddLocation}
-              />
-              <BulkScheduleModal devices={devices} />
-              <BulkOperationsModal onBulkUpload={handleBulkUpload} />
-              <LocationManagerModal
-                locations={locationStats}
-                onEditLocation={handleEditLocation}
-                onDeleteLocation={handleDeleteLocation}
-              />
-              <AddLocationModal onAddLocation={handleAddLocation} />
-              <AddDeviceModal
-                locations={locations}
-                onAddDevice={handleAddDevice}
-                onAddLocation={handleAddLocation}
-              />
+              
+              {/* Action Buttons - Scrollable on mobile */}
+              <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
+                <div className="flex gap-2 flex-shrink-0">
+                  <UserDeviceMappingModal 
+                    devices={devices} 
+                    locations={locations}
+                    onAddLocation={handleAddLocation}
+                  />
+                  <BulkScheduleModal devices={devices} />
+                  <BulkOperationsModal onBulkUpload={handleBulkUpload} />
+                  <LocationManagerModal
+                    locations={locationStats}
+                    onEditLocation={handleEditLocation}
+                    onDeleteLocation={handleDeleteLocation}
+                  />
+                  <AddLocationModal onAddLocation={handleAddLocation} />
+                  <AddDeviceModal
+                    locations={locations}
+                    onAddDevice={handleAddDevice}
+                    onAddLocation={handleAddLocation}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="space-y-8">
           {sortedLocations.map(([location, devices]) => (
             <div
@@ -291,40 +299,40 @@ export default function Devices() {
             >
               <div
                 className={cn(
-                  "w-full px-6 py-4 flex items-center justify-between",
+                  "w-full px-4 sm:px-6 py-4 flex items-center justify-between",
                   "hover:bg-card/50 transition-colors duration-200"
                 )}
               >
                 <button
                   onClick={() => toggleLocation(location)}
-                  className="flex items-center gap-3 flex-1"
+                  className="flex items-center gap-2 sm:gap-3 flex-1"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {location === "unmapped" ? (
-                      <MapPin className="w-5 h-5 text-muted-foreground" />
+                      <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
                     ) : (
-                      <MapPin className="w-5 h-5 text-primary" />
+                      <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                     )}
                     <h2 className={cn(
-                      "text-lg font-semibold",
+                      "text-base sm:text-lg font-semibold truncate",
                       location === "unmapped" && "text-muted-foreground"
                     )}>
                       {location === "unmapped" ? "Unmapped Devices" : location}
                     </h2>
-                    <Badge variant={location === "unmapped" ? "outline" : "secondary"}>
+                    <Badge variant={location === "unmapped" ? "outline" : "secondary"} className="flex-shrink-0">
                       {devices.length}
                     </Badge>
                   </div>
                   {expandedLocations.includes(location) ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
+                    <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
+                    <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
                   )}
                 </button>
               </div>
 
               {expandedLocations.includes(location) && (
-                <div className="px-6 pb-6">
+                <div className="px-4 sm:px-6 pb-6">
                   {devices.length === 0 && location !== "unmapped" && unmappedDevices.length > 0 ? (
                     <div className="text-center py-8">
                       <p className="text-muted-foreground mb-4">No devices in this location</p>
