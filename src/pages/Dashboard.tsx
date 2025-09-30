@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter, Building2 } from "lucide-react";
+import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter, Building2, Calendar } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,18 +41,18 @@ const stats = [
 ];
 
 const devicesData = [
-  { id: "1", name: "Reception Area Diffuser", location: "Main Office", status: "online", oilLevel: 85 },
-  { id: "2", name: "Conference Room Alpha", location: "Main Office", status: "online", oilLevel: 72 },
-  { id: "3", name: "Lobby Central Unit", location: "Lobby Area", status: "offline", oilLevel: 0 },
-  { id: "4", name: "Executive Suite Diffuser", location: "Executive Floor", status: "online", oilLevel: 15 },
-  { id: "5", name: "Cafeteria Corner Unit", location: "Cafeteria", status: "online", oilLevel: 45 },
-  { id: "6", name: "Conference Room Beta", location: "Main Office", status: "online", oilLevel: 90 },
-  { id: "7", name: "Reception Waiting Area", location: "Reception", status: "offline", oilLevel: 5 },
-  { id: "8", name: "VIP Lounge Diffuser", location: "Executive Floor", status: "online", oilLevel: 68 },
-  { id: "9", name: "Main Hallway Unit 1", location: "Main Office", status: "online", oilLevel: 35 },
-  { id: "10", name: "Main Hallway Unit 2", location: "Main Office", status: "online", oilLevel: 20 },
-  { id: "11", name: "Break Room Diffuser", location: "Cafeteria", status: "online", oilLevel: 55 },
-  { id: "12", name: "Guest Reception Unit", location: "Reception", status: "online", oilLevel: 80 },
+  { id: "1", name: "Reception Area Diffuser", location: "Main Office", status: "online", oilLevel: 85, fuelRate: 10, tankCapacity: 250 },
+  { id: "2", name: "Conference Room Alpha", location: "Main Office", status: "online", oilLevel: 72, fuelRate: 8, tankCapacity: 250 },
+  { id: "3", name: "Lobby Central Unit", location: "Lobby Area", status: "offline", oilLevel: 0, fuelRate: 12, tankCapacity: 300 },
+  { id: "4", name: "Executive Suite Diffuser", location: "Executive Floor", status: "online", oilLevel: 15, fuelRate: 9, tankCapacity: 200 },
+  { id: "5", name: "Cafeteria Corner Unit", location: "Cafeteria", status: "online", oilLevel: 45, fuelRate: 11, tankCapacity: 250 },
+  { id: "6", name: "Conference Room Beta", location: "Main Office", status: "online", oilLevel: 90, fuelRate: 8, tankCapacity: 250 },
+  { id: "7", name: "Reception Waiting Area", location: "Reception", status: "offline", oilLevel: 5, fuelRate: 10, tankCapacity: 200 },
+  { id: "8", name: "VIP Lounge Diffuser", location: "Executive Floor", status: "online", oilLevel: 68, fuelRate: 7, tankCapacity: 250 },
+  { id: "9", name: "Main Hallway Unit 1", location: "Main Office", status: "online", oilLevel: 35, fuelRate: 10, tankCapacity: 250 },
+  { id: "10", name: "Main Hallway Unit 2", location: "Main Office", status: "online", oilLevel: 20, fuelRate: 9, tankCapacity: 250 },
+  { id: "11", name: "Break Room Diffuser", location: "Cafeteria", status: "online", oilLevel: 55, fuelRate: 10, tankCapacity: 250 },
+  { id: "12", name: "Guest Reception Unit", location: "Reception", status: "online", oilLevel: 80, fuelRate: 8, tankCapacity: 250 },
 ];
 
 const locationStats = [
@@ -88,6 +88,27 @@ export default function Dashboard() {
     if (level <= 20) return "destructive";
     if (level <= 50) return "warning";
     return "success";
+  };
+
+  // Calculate days until oil exhaustion
+  const calculateDaysUntilRefill = (oilLevel: number, fuelRate: number, tankCapacity: number, status: string) => {
+    if (status === "offline" || oilLevel === 0) return "N/A";
+    
+    const currentOilMl = (oilLevel / 100) * tankCapacity;
+    const hoursRemaining = currentOilMl / fuelRate;
+    const daysRemaining = Math.floor(hoursRemaining / 24);
+    
+    if (daysRemaining < 1) return "<1 day";
+    if (daysRemaining === 1) return "1 day";
+    return `${daysRemaining} days`;
+  };
+
+  const getDaysUntilRefillBadge = (days: string) => {
+    if (days === "N/A") return "secondary";
+    if (days === "<1 day") return "destructive";
+    const numDays = parseInt(days);
+    if (!isNaN(numDays) && numDays <= 3) return "warning";
+    return "default";
   };
 
   return (
@@ -177,6 +198,7 @@ export default function Dashboard() {
                       <TableHead className="font-semibold">Location</TableHead>
                       <TableHead className="font-semibold">Status</TableHead>
                       <TableHead className="font-semibold">Oil Level</TableHead>
+                      <TableHead className="font-semibold">Days Until Refill</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -213,6 +235,15 @@ export default function Dashboard() {
                               {device.oilLevel}%
                             </Badge>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={getDaysUntilRefillBadge(calculateDaysUntilRefill(device.oilLevel, device.fuelRate, device.tankCapacity, device.status))}
+                            className="gap-1"
+                          >
+                            <Calendar className="w-3 h-3" />
+                            {calculateDaysUntilRefill(device.oilLevel, device.fuelRate, device.tankCapacity, device.status)}
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
