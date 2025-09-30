@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, MapPin, Upload, Download, FileText, X } from "lucide-react";
+import { User, MapPin, Upload, Download, FileText, X, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,7 @@ interface User {
   email: string;
   phone?: string;
   department?: string;
+  location: string;
 }
 
 interface Device {
@@ -37,21 +38,25 @@ interface UserDeviceMapping {
 
 interface UserDeviceMappingModalProps {
   devices: Device[];
+  locations: string[];
   onMappingUpdate?: (mappings: UserDeviceMapping[]) => void;
+  onAddLocation?: (name: string) => void;
 }
 
-export function UserDeviceMappingModal({ devices, onMappingUpdate }: UserDeviceMappingModalProps) {
+export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, onAddLocation }: UserDeviceMappingModalProps) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([
-    { id: "1", name: "John Doe", email: "john@example.com", phone: "+1234567890", department: "IT" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+0987654321", department: "HR" },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", phone: "+1122334455", department: "Operations" },
+    { id: "1", name: "John Doe", email: "john@example.com", phone: "+1234567890", department: "IT", location: "Location A" },
+    { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+0987654321", department: "HR", location: "Location B" },
+    { id: "3", name: "Mike Johnson", email: "mike@example.com", phone: "+1122334455", department: "Operations", location: "Location A" },
   ]);
   const [mappings, setMappings] = useState<UserDeviceMapping[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [newUser, setNewUser] = useState({ name: "", email: "", phone: "", department: "" });
+  const [newUser, setNewUser] = useState({ name: "", email: "", phone: "", department: "", location: "" });
+  const [showAddLocation, setShowAddLocation] = useState(false);
+  const [newLocationName, setNewLocationName] = useState("");
   const { toast } = useToast();
 
   const availableDevices = devices.filter(device => 
@@ -111,11 +116,40 @@ export function UserDeviceMappingModal({ devices, onMappingUpdate }: UserDeviceM
     });
   };
 
-  const handleAddUser = () => {
-    if (!newUser.name.trim() || !newUser.email.trim()) {
+  const handleAddLocation = () => {
+    if (!newLocationName.trim()) {
       toast({
         title: "Missing Information",
-        description: "Name and email are required",
+        description: "Location name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (locations.includes(newLocationName)) {
+      toast({
+        title: "Location Exists",
+        description: "This location already exists",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    onAddLocation?.(newLocationName);
+    setNewLocationName("");
+    setShowAddLocation(false);
+
+    toast({
+      title: "Location Added",
+      description: `${newLocationName} has been added successfully`,
+    });
+  };
+
+  const handleAddUser = () => {
+    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.location.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Name, email, and location are required",
         variant: "destructive",
       });
       return;
@@ -127,7 +161,7 @@ export function UserDeviceMappingModal({ devices, onMappingUpdate }: UserDeviceM
     };
 
     setUsers(prev => [...prev, user]);
-    setNewUser({ name: "", email: "", phone: "", department: "" });
+    setNewUser({ name: "", email: "", phone: "", department: "", location: "" });
 
     toast({
       title: "User Added",
@@ -394,6 +428,55 @@ export function UserDeviceMappingModal({ devices, onMappingUpdate }: UserDeviceM
                     placeholder="Enter department"
                   />
                 </div>
+                <div className="space-y-2 col-span-2">
+                  <Label>Location *</Label>
+                  {!showAddLocation ? (
+                    <div className="flex gap-2">
+                      <Select value={newUser.location} onValueChange={(value) => setNewUser(prev => ({ ...prev, location: value }))}>
+                        <SelectTrigger className="flex-1">
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locations.map(location => (
+                            <SelectItem key={location} value={location}>
+                              {location}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => setShowAddLocation(true)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Input
+                        value={newLocationName}
+                        onChange={(e) => setNewLocationName(e.target.value)}
+                        placeholder="Enter new location name"
+                        className="flex-1"
+                      />
+                      <Button onClick={handleAddLocation} size="sm">
+                        Add
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowAddLocation(false);
+                          setNewLocationName("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               <Button onClick={handleAddUser} className="mt-4 w-full">
                 Add User
@@ -410,10 +493,19 @@ export function UserDeviceMappingModal({ devices, onMappingUpdate }: UserDeviceM
                         <p className="font-medium">{user.name}</p>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                         {user.phone && <p className="text-xs text-muted-foreground">{user.phone}</p>}
+                        <div className="flex items-center gap-2 mt-1">
+                          <MapPin className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">{user.location}</span>
+                        </div>
                       </div>
-                      {user.department && (
-                        <Badge variant="outline">{user.department}</Badge>
-                      )}
+                      <div className="flex flex-col gap-1 items-end">
+                        {user.department && (
+                          <Badge variant="outline">{user.department}</Badge>
+                        )}
+                        <Badge variant="secondary" className="text-xs">
+                          {user.location}
+                        </Badge>
+                      </div>
                     </div>
                   </Card>
                 ))}

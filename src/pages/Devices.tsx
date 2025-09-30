@@ -255,7 +255,11 @@ export default function Devices() {
                   />
                 </div>
               </div>
-              <UserDeviceMappingModal devices={devices} />
+              <UserDeviceMappingModal 
+                devices={devices} 
+                locations={locations}
+                onAddLocation={handleAddLocation}
+              />
               <BulkOperationsModal onBulkUpload={handleBulkUpload} />
               <LocationManagerModal
                 locations={locationStats}
