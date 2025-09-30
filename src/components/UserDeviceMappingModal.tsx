@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, MapPin, Upload, Download, FileText, X, Plus } from "lucide-react";
+import { User, MapPin, Upload, Download, FileText, X, Plus, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,6 +57,8 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
   const [newUser, setNewUser] = useState({ name: "", email: "", phone: "", department: "", location: "" });
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editUser, setEditUser] = useState({ name: "", email: "", phone: "", department: "", location: "" });
   const { toast } = useToast();
 
   const availableDevices = devices.filter(device => 
@@ -167,6 +169,49 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
       title: "User Added",
       description: `${user.name} has been added successfully`,
     });
+  };
+
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setEditUser({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || "",
+      department: user.department || "",
+      location: user.location,
+    });
+  };
+
+  const handleUpdateUser = () => {
+    if (!editUser.name.trim() || !editUser.email.trim() || !editUser.location.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Name, email, and location are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!editingUser) return;
+
+    const updatedUser: User = {
+      id: editingUser.id,
+      ...editUser,
+    };
+
+    setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
+    setEditingUser(null);
+    setEditUser({ name: "", email: "", phone: "", department: "", location: "" });
+
+    toast({
+      title: "User Updated",
+      description: `${updatedUser.name} has been updated successfully`,
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingUser(null);
+    setEditUser({ name: "", email: "", phone: "", department: "", location: "" });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -322,7 +367,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                   <SelectContent>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name} ({user.email})
+                        {user.name} ({user.email}) - {user.location}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -338,7 +383,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                   <SelectContent>
                     {availableDevices.map(device => (
                       <SelectItem key={device.id} value={device.id}>
-                        {device.name} (ID: {device.deviceId})
+                        {device.name} (ID: {device.deviceId}) - {device.location}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -391,7 +436,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
             </div>
           </TabsContent>
           
-          <TabsContent value="users" className="flex-1 space-y-4">
+          <TabsContent value="users" className="flex-1 space-y-4 overflow-y-auto">
             <Card className="p-4">
               <h3 className="font-medium mb-4">Add New User</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -439,7 +484,10 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                         <SelectContent>
                           {locations.map(location => (
                             <SelectItem key={location} value={location}>
-                              {location}
+                              <div className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4" />
+                                {location}
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -449,6 +497,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                         variant="outline"
                         size="icon"
                         onClick={() => setShowAddLocation(true)}
+                        title="Add new location"
                       >
                         <Plus className="w-4 h-4" />
                       </Button>
@@ -483,13 +532,80 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
               </Button>
             </Card>
             
+            {editingUser && (
+              <Card className="p-4 border-primary">
+                <h3 className="font-medium mb-4">Edit User: {editingUser.name}</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Name *</Label>
+                    <Input
+                      value={editUser.name}
+                      onChange={(e) => setEditUser(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Enter user name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Email *</Label>
+                    <Input
+                      type="email"
+                      value={editUser.email}
+                      onChange={(e) => setEditUser(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="Enter email address"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input
+                      value={editUser.phone}
+                      onChange={(e) => setEditUser(prev => ({ ...prev, phone: e.target.value }))}
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Department</Label>
+                    <Input
+                      value={editUser.department}
+                      onChange={(e) => setEditUser(prev => ({ ...prev, department: e.target.value }))}
+                      placeholder="Enter department"
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label>Location *</Label>
+                    <Select value={editUser.location} onValueChange={(value) => setEditUser(prev => ({ ...prev, location: value }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.map(location => (
+                          <SelectItem key={location} value={location}>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              {location}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button onClick={handleUpdateUser} className="flex-1">
+                    Update User
+                  </Button>
+                  <Button variant="outline" onClick={handleCancelEdit} className="flex-1">
+                    Cancel
+                  </Button>
+                </div>
+              </Card>
+            )}
+            
             <div className="space-y-2">
               <h3 className="font-medium">Existing Users</h3>
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {users.map(user => (
                   <Card key={user.id} className="p-3">
                     <div className="flex justify-between items-start">
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium">{user.name}</p>
                         <p className="text-sm text-muted-foreground">{user.email}</p>
                         {user.phone && <p className="text-xs text-muted-foreground">{user.phone}</p>}
@@ -498,13 +614,23 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                           <span className="text-xs text-muted-foreground">{user.location}</span>
                         </div>
                       </div>
-                      <div className="flex flex-col gap-1 items-end">
-                        {user.department && (
-                          <Badge variant="outline">{user.department}</Badge>
-                        )}
-                        <Badge variant="secondary" className="text-xs">
-                          {user.location}
-                        </Badge>
+                      <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1 items-end">
+                          {user.department && (
+                            <Badge variant="outline">{user.department}</Badge>
+                          )}
+                          <Badge variant="secondary" className="text-xs">
+                            {user.location}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          onClick={() => handleEditUser(user)}
+                          title="Edit user"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
                       </div>
                     </div>
                   </Card>
@@ -545,6 +671,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                           size="icon"
                           variant="ghost"
                           onClick={() => handleRemoveMapping(mapping.id)}
+                          title="Remove mapping"
                         >
                           <X className="w-4 h-4" />
                         </Button>
