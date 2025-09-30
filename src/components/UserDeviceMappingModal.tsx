@@ -17,6 +17,8 @@ interface User {
   phone?: string;
   department?: string;
   location: string;
+  role?: string;
+  permissions?: string[];
 }
 
 interface Device {
@@ -46,19 +48,20 @@ interface UserDeviceMappingModalProps {
 export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, onAddLocation }: UserDeviceMappingModalProps) {
   const [open, setOpen] = useState(false);
   const [users, setUsers] = useState<User[]>([
-    { id: "1", name: "John Doe", email: "john@example.com", phone: "+1234567890", department: "IT", location: "Location A" },
-    { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+0987654321", department: "HR", location: "Location B" },
-    { id: "3", name: "Mike Johnson", email: "mike@example.com", phone: "+1122334455", department: "Operations", location: "Location A" },
+    { id: "1", name: "John Doe", email: "john@example.com", phone: "+1234567890", department: "IT", location: "Location A", role: "Admin", permissions: ["read", "write", "delete"] },
+    { id: "2", name: "Jane Smith", email: "jane@example.com", phone: "+0987654321", department: "HR", location: "Location B", role: "Manager", permissions: ["read", "write"] },
+    { id: "3", name: "Mike Johnson", email: "mike@example.com", phone: "+1122334455", department: "Operations", location: "Location A", role: "User", permissions: ["read"] },
   ]);
   const [mappings, setMappings] = useState<UserDeviceMapping[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [newUser, setNewUser] = useState({ name: "", email: "", phone: "", department: "", location: "" });
+  const [newUser, setNewUser] = useState({ name: "", email: "", department: "", location: "" });
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [editUser, setEditUser] = useState({ name: "", email: "", phone: "", department: "", location: "" });
+  const [editUserModalOpen, setEditUserModalOpen] = useState(false);
+  const [editUser, setEditUser] = useState({ role: "", department: "", location: "", permissions: [] as string[] });
   const { toast } = useToast();
 
   const availableDevices = devices.filter(device => 
@@ -160,10 +163,12 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
     const user: User = {
       id: Date.now().toString(),
       ...newUser,
+      role: "User",
+      permissions: ["read"],
     };
 
     setUsers(prev => [...prev, user]);
-    setNewUser({ name: "", email: "", phone: "", department: "", location: "" });
+    setNewUser({ name: "", email: "", department: "", location: "" });
 
     toast({
       title: "User Added",
@@ -174,19 +179,19 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
   const handleEditUser = (user: User) => {
     setEditingUser(user);
     setEditUser({
-      name: user.name,
-      email: user.email,
-      phone: user.phone || "",
+      role: user.role || "",
       department: user.department || "",
       location: user.location,
+      permissions: user.permissions || [],
     });
+    setEditUserModalOpen(true);
   };
 
   const handleUpdateUser = () => {
-    if (!editUser.name.trim() || !editUser.email.trim() || !editUser.location.trim()) {
+    if (!editUser.location.trim()) {
       toast({
         title: "Missing Information",
-        description: "Name, email, and location are required",
+        description: "Location is required",
         variant: "destructive",
       });
       return;
@@ -195,13 +200,17 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
     if (!editingUser) return;
 
     const updatedUser: User = {
-      id: editingUser.id,
-      ...editUser,
+      ...editingUser,
+      role: editUser.role,
+      department: editUser.department,
+      location: editUser.location,
+      permissions: editUser.permissions,
     };
 
     setUsers(prev => prev.map(u => u.id === editingUser.id ? updatedUser : u));
     setEditingUser(null);
-    setEditUser({ name: "", email: "", phone: "", department: "", location: "" });
+    setEditUser({ role: "", department: "", location: "", permissions: [] });
+    setEditUserModalOpen(false);
 
     toast({
       title: "User Updated",
@@ -211,7 +220,8 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
 
   const handleCancelEdit = () => {
     setEditingUser(null);
-    setEditUser({ name: "", email: "", phone: "", department: "", location: "" });
+    setEditUser({ role: "", department: "", location: "", permissions: [] });
+    setEditUserModalOpen(false);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -458,14 +468,6 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input
-                    value={newUser.phone}
-                    onChange={(e) => setNewUser(prev => ({ ...prev, phone: e.target.value }))}
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Department</Label>
                   <Input
                     value={newUser.department}
@@ -473,7 +475,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                     placeholder="Enter department"
                   />
                 </div>
-                <div className="space-y-2 col-span-2">
+                <div className="space-y-2">
                   <Label>Location *</Label>
                   {!showAddLocation ? (
                     <div className="flex gap-2">
@@ -532,72 +534,6 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
               </Button>
             </Card>
             
-            {editingUser && (
-              <Card className="p-4 border-primary">
-                <h3 className="font-medium mb-4">Edit User: {editingUser.name}</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Name *</Label>
-                    <Input
-                      value={editUser.name}
-                      onChange={(e) => setEditUser(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="Enter user name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Email *</Label>
-                    <Input
-                      type="email"
-                      value={editUser.email}
-                      onChange={(e) => setEditUser(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="Enter email address"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      value={editUser.phone}
-                      onChange={(e) => setEditUser(prev => ({ ...prev, phone: e.target.value }))}
-                      placeholder="Enter phone number"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Department</Label>
-                    <Input
-                      value={editUser.department}
-                      onChange={(e) => setEditUser(prev => ({ ...prev, department: e.target.value }))}
-                      placeholder="Enter department"
-                    />
-                  </div>
-                  <div className="space-y-2 col-span-2">
-                    <Label>Location *</Label>
-                    <Select value={editUser.location} onValueChange={(value) => setEditUser(prev => ({ ...prev, location: value }))}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map(location => (
-                          <SelectItem key={location} value={location}>
-                            <div className="flex items-center gap-2">
-                              <MapPin className="w-4 h-4" />
-                              {location}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button onClick={handleUpdateUser} className="flex-1">
-                    Update User
-                  </Button>
-                  <Button variant="outline" onClick={handleCancelEdit} className="flex-1">
-                    Cancel
-                  </Button>
-                </div>
-              </Card>
-            )}
             
             <div className="space-y-2">
               <h3 className="font-medium">Existing Users</h3>
@@ -615,14 +551,17 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex flex-col gap-1 items-end">
-                          {user.department && (
-                            <Badge variant="outline">{user.department}</Badge>
-                          )}
-                          <Badge variant="secondary" className="text-xs">
-                            {user.location}
-                          </Badge>
-                        </div>
+                         <div className="flex flex-col gap-1 items-end">
+                           {user.department && (
+                             <Badge variant="outline">{user.department}</Badge>
+                           )}
+                           {user.role && (
+                             <Badge variant="default">{user.role}</Badge>
+                           )}
+                           <Badge variant="secondary" className="text-xs">
+                             {user.location}
+                           </Badge>
+                         </div>
                         <Button
                           size="icon"
                           variant="ghost"
@@ -684,6 +623,120 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
           </TabsContent>
         </Tabs>
       </DialogContent>
+      
+      {/* Edit User Modal */}
+      <Dialog open={editUserModalOpen} onOpenChange={setEditUserModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          {editingUser && (
+            <div className="space-y-4">
+              {/* Non-editable user info */}
+              <div className="space-y-2 p-3 bg-muted/30 rounded-md">
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Name</Label>
+                  <p className="font-medium">{editingUser.name}</p>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Email</Label>
+                  <p className="text-sm">{editingUser.email}</p>
+                </div>
+                {editingUser.phone && (
+                  <div className="space-y-1">
+                    <Label className="text-xs text-muted-foreground">Phone</Label>
+                    <p className="text-sm">{editingUser.phone}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Editable fields */}
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Role</Label>
+                  <Select value={editUser.role} onValueChange={(value) => setEditUser(prev => ({ ...prev, role: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Admin">Admin</SelectItem>
+                      <SelectItem value="Manager">Manager</SelectItem>
+                      <SelectItem value="User">User</SelectItem>
+                      <SelectItem value="Viewer">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Input
+                    value={editUser.department}
+                    onChange={(e) => setEditUser(prev => ({ ...prev, department: e.target.value }))}
+                    placeholder="Enter department"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Location *</Label>
+                  <Select value={editUser.location} onValueChange={(value) => setEditUser(prev => ({ ...prev, location: value }))}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.map(location => (
+                        <SelectItem key={location} value={location}>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4" />
+                            {location}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Permissions</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {["read", "write", "delete", "admin"].map(permission => (
+                      <label key={permission} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          checked={editUser.permissions.includes(permission)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditUser(prev => ({ 
+                                ...prev, 
+                                permissions: [...prev.permissions, permission] 
+                              }));
+                            } else {
+                              setEditUser(prev => ({ 
+                                ...prev, 
+                                permissions: prev.permissions.filter(p => p !== permission) 
+                              }));
+                            }
+                          }}
+                          className="rounded border-border"
+                        />
+                        <span className="text-sm capitalize">{permission}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleUpdateUser} className="flex-1">
+                  Update User
+                </Button>
+                <Button variant="outline" onClick={handleCancelEdit} className="flex-1">
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
