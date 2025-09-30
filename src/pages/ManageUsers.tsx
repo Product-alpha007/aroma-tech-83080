@@ -48,9 +48,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { useUsers } from "@/contexts/UserContext";
+import { useLocations } from "@/contexts/LocationContext";
+import { AddLocationModal } from "@/components/AddLocationModal";
 
 export default function ManageUsers() {
   const { users, addUser, updateUser, removeUser } = useUsers();
+  const { locations, addLocation } = useLocations();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
@@ -63,7 +66,6 @@ export default function ManageUsers() {
   const [newUser, setNewUser] = useState({
     name: "",
     email: "",
-    phone: "",
     role: "",
     department: "",
     location: "",
@@ -99,7 +101,6 @@ export default function ManageUsers() {
     setNewUser({
       name: "",
       email: "",
-      phone: "",
       role: "",
       department: "",
       location: "",
@@ -356,15 +357,6 @@ export default function ManageUsers() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  value={newUser.phone}
-                  onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                  placeholder="+1 234 567 8900"
-                />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select 
                   value={newUser.role}
@@ -380,8 +372,6 @@ export default function ManageUsers() {
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="department">Department</Label>
                 <Input
@@ -391,13 +381,32 @@ export default function ManageUsers() {
                   placeholder="Engineering"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <div className="flex gap-2">
+                <Select 
                   value={newUser.location}
-                  onChange={(e) => setNewUser({ ...newUser, location: e.target.value })}
-                  placeholder="New York Office"
+                  onValueChange={(value) => setNewUser({ ...newUser, location: value })}
+                >
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Select location" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((location) => (
+                      <SelectItem key={location} value={location}>
+                        {location}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <AddLocationModal 
+                  onAddLocation={addLocation} 
+                  trigger={
+                    <Button type="button" variant="outline" size="icon">
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  } 
                 />
               </div>
             </div>

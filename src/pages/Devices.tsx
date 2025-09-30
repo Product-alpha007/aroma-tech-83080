@@ -13,6 +13,7 @@ import { LocationManagerModal } from "@/components/LocationManagerModal";
 import { UserDeviceMappingModal } from "@/components/UserDeviceMappingModal";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useLocations } from "@/contexts/LocationContext";
 
 interface Device {
   id: string;
@@ -74,7 +75,7 @@ const initialDevicesData: Device[] = [
 
 export default function Devices() {
   const [devices, setDevices] = useState<Device[]>(initialDevicesData);
-  const [locations, setLocations] = useState<string[]>(["Location A", "Location B"]);
+  const { locations, addLocation, updateLocation, removeLocation } = useLocations();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"devices" | "locations">("devices");
   const [expandedLocations, setExpandedLocations] = useState<string[]>(["Location A", "Location B", "unmapped"]);
@@ -102,10 +103,8 @@ export default function Devices() {
   };
 
   const handleAddLocation = (name: string) => {
-    if (!locations.includes(name) && name !== "unmapped") {
-      setLocations(prev => [...prev, name]);
-      setExpandedLocations(prev => [...prev, name]);
-    }
+    addLocation(name);
+    setExpandedLocations(prev => [...prev, name]);
   };
 
   const handleBulkUpload = (newDevices: Array<{ deviceId: string; name: string; location: string }>) => {
@@ -125,7 +124,7 @@ export default function Devices() {
       .filter(loc => loc !== "unmapped" && !locations.includes(loc));
     
     if (newLocations.length > 0) {
-      setLocations(prev => [...prev, ...newLocations]);
+      newLocations.forEach(loc => addLocation(loc));
       setExpandedLocations(prev => [...prev, ...newLocations]);
     }
     
@@ -133,7 +132,7 @@ export default function Devices() {
   };
 
   const handleEditLocation = (oldName: string, newName: string) => {
-    setLocations(prev => prev.map(loc => loc === oldName ? newName : loc));
+    updateLocation(oldName, newName);
     setDevices(prev => prev.map(device => 
       device.location === oldName ? { ...device, location: newName } : device
     ));
@@ -141,7 +140,7 @@ export default function Devices() {
   };
 
   const handleDeleteLocation = (name: string) => {
-    setLocations(prev => prev.filter(loc => loc !== name));
+    removeLocation(name);
     setDevices(prev => prev.map(device => 
       device.location === name ? { ...device, location: "unmapped" } : device
     ));
