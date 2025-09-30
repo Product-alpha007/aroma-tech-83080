@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { AddDeviceModal } from "@/components/AddDeviceModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { BulkOperationsModal } from "@/components/BulkOperationsModal";
+import { BulkScheduleModal } from "@/components/BulkScheduleModal";
 import { LocationManagerModal } from "@/components/LocationManagerModal";
 import { UserDeviceMappingModal } from "@/components/UserDeviceMappingModal";
 import { useToast } from "@/hooks/use-toast";
@@ -259,6 +260,7 @@ export default function Devices() {
                 locations={locations}
                 onAddLocation={handleAddLocation}
               />
+              <BulkScheduleModal />
               <BulkOperationsModal onBulkUpload={handleBulkUpload} />
               <LocationManagerModal
                 locations={locationStats}

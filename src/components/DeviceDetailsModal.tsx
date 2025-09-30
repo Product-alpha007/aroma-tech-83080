@@ -7,7 +7,9 @@ import {
   Wifi, 
   Settings,
   ChevronRight,
-  Plus
+  Plus,
+  Edit2,
+  Save
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -56,6 +58,8 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
   const [fanLevel, setFanLevel] = useState("L2");
   const [showFanSelector, setShowFanSelector] = useState(false);
   const [showWorkModeForm, setShowWorkModeForm] = useState(false);
+  const [editingFuelRate, setEditingFuelRate] = useState(false);
+  const [fuelRate, setFuelRate] = useState(parseInt(device.fuelRate.replace(/\D/g, '')));
   const [workModes, setWorkModes] = useState<WorkMode[]>([
     {
       id: 1,
@@ -126,6 +130,14 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
     toast({
       title: "Work Mode Created",
       description: `${workMode.name} has been created successfully`
+    });
+  };
+
+  const handleSaveFuelRate = () => {
+    setEditingFuelRate(false);
+    toast({
+      title: "Fuel Rate Updated",
+      description: `Consumption rate set to ${fuelRate} mL/Hr`
     });
   };
 
@@ -200,6 +212,44 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
                 <Label htmlFor="location" className="text-muted-foreground">Location</Label>
                 <span className="text-sm text-right max-w-[200px]">{device.location}</span>
               </div>
+
+              <div className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border/50">
+                <Label htmlFor="fuel-rate" className="text-muted-foreground">Fuel Rate</Label>
+                <div className="flex items-center gap-2">
+                  {editingFuelRate ? (
+                    <>
+                      <Input
+                        id="fuel-rate"
+                        type="number"
+                        value={fuelRate}
+                        onChange={(e) => setFuelRate(Number(e.target.value))}
+                        className="w-20 h-8 text-right"
+                      />
+                      <span className="text-sm">mL/Hr</span>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-8 w-8"
+                        onClick={handleSaveFuelRate}
+                      >
+                        <Save className="w-4 h-4 text-primary" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-sm font-medium">{fuelRate} mL/Hr</span>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-8 w-8"
+                        onClick={() => setEditingFuelRate(true)}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* User Assignment */}
@@ -272,8 +322,8 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
                   <p className="text-xs text-muted-foreground">Total</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{device.fuelRate}</p>
-                  <p className="text-xs text-muted-foreground">Fuel</p>
+                  <p className="text-sm font-medium">{fuelRate} mL/Hr</p>
+                  <p className="text-xs text-muted-foreground">Consumption</p>
                 </div>
                 <div>
                   <p className="text-sm font-medium">Stopped</p>
