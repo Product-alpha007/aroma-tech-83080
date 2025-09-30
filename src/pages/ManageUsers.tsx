@@ -157,13 +157,13 @@ export default function ManageUsers() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-10">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 py-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-2xl font-bold">Manage Users</h1>
-              <p className="text-muted-foreground">Add, remove and manage user permissions</p>
+              <h1 className="text-xl sm:text-2xl font-bold">Manage Users</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Add, remove and manage user permissions</p>
             </div>
-            <Button onClick={() => setShowAddUserDialog(true)} className="gap-2">
+            <Button onClick={() => setShowAddUserDialog(true)} className="gap-2 w-full sm:w-auto">
               <UserPlus className="w-4 h-4" />
               Add User
             </Button>
@@ -171,7 +171,7 @@ export default function ManageUsers() {
         </div>
       </header>
 
-      <main className="container mx-auto px-6 py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Filters */}
         <Card className="mb-6 p-4 bg-gradient-card border-border/50">
           <div className="flex flex-col sm:flex-row gap-4">
@@ -362,7 +362,7 @@ export default function ManageUsers() {
 
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
             <DialogDescription>
@@ -370,7 +370,7 @@ export default function ManageUsers() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>
                 <Input
@@ -391,7 +391,7 @@ export default function ManageUsers() {
                 />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select 
@@ -530,7 +530,7 @@ export default function ManageUsers() {
 
       {/* Edit User Dialog */}
       <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
@@ -539,7 +539,7 @@ export default function ManageUsers() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {/* Non-editable fields */}
-            <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Full Name</Label>
                 <p className="font-medium">{selectedUser?.name}</p>
@@ -557,7 +557,7 @@ export default function ManageUsers() {
             </div>
 
             {/* Editable fields */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-role">Role</Label>
                 <Select 
