@@ -229,7 +229,7 @@ export default function Devices() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
-      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-10 overflow-hidden">
+      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-16 z-10 overflow-hidden">
         <div className="container mx-auto px-4 sm:px-6 py-4 max-w-full">
           <div className="flex flex-col gap-4">
             <div className="flex items-center justify-between">

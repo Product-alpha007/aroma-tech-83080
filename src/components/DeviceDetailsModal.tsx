@@ -171,18 +171,18 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 h-[90vh] flex flex-col bg-gradient-card border-border">
+      <DialogContent className="max-w-md w-[calc(100vw-2rem)] sm:w-full p-0 gap-0 max-h-[90vh] flex flex-col bg-gradient-card border-border overflow-hidden">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle className="text-xl font-semibold">Device Details</DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="info" className="flex-1 flex flex-col">
-          <TabsList className="mx-6 grid w-[calc(100%-3rem)] grid-cols-2 bg-background/50">
-            <TabsTrigger value="info">Device Info</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className="mx-4 sm:mx-6 grid w-[calc(100%-2rem)] sm:w-[calc(100%-3rem)] grid-cols-2 bg-background/50">
+            <TabsTrigger value="info" className="text-sm">Device Info</TabsTrigger>
+            <TabsTrigger value="settings" className="text-sm">Settings</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="info" className="flex-1 overflow-y-auto px-6 pb-6 mt-4 space-y-4">
+          <TabsContent value="info" className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 mt-4 space-y-4">
             {/* Device Image */}
             <div className="aspect-square rounded-lg border-2 border-dashed border-border/50 bg-background/50 flex flex-col items-center justify-center">
               {device.image ? (
@@ -225,8 +225,8 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border/50">
-                <Label htmlFor="location" className="text-muted-foreground">Location</Label>
-                <span className="text-sm text-right max-w-[200px]">{device.location}</span>
+                <Label htmlFor="location" className="text-muted-foreground flex-shrink-0">Location</Label>
+                <span className="text-sm text-right max-w-[200px] truncate">{device.location}</span>
               </div>
 
               <div className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border/50">
@@ -280,7 +280,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
             </Button>
           </TabsContent>
           
-          <TabsContent value="settings" className="flex-1 overflow-y-auto px-6 pb-6 mt-4 space-y-4">
+          <TabsContent value="settings" className="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 mt-4 space-y-4">
             {/* Device Status Header */}
             <Card className="p-4 bg-background/50 border-border/50">
               <div className="flex items-center justify-between mb-4">
@@ -328,7 +328,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
               </div>
 
               {/* Device Stats */}
-              <div className="grid grid-cols-4 gap-2 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
                 <div>
                   <p className="text-sm font-medium">Not Set</p>
                   <p className="text-xs text-muted-foreground">Scent</p>
@@ -427,7 +427,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
                       />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="start-time" className="text-sm font-medium">Start Time</Label>
                         <Input
@@ -456,7 +456,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-4">
                       <div>
                         <Label htmlFor="work-duration" className="text-sm font-medium">Work Duration (s)</Label>
                         <Input
@@ -487,13 +487,13 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
 
                     <div>
                       <Label className="text-sm font-medium">Week Days</Label>
-                      <div className="flex gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1 mt-2">
                         {weekDays.map(day => (
                           <button
                             key={day}
                             onClick={() => toggleWeekDay(day)}
                             className={cn(
-                              "px-2 py-1 text-xs rounded transition-colors",
+                              "px-2 py-1 text-xs rounded transition-colors flex-shrink-0",
                               newWorkMode.weekDays?.includes(day)
                                 ? "bg-primary text-primary-foreground"
                                 : "bg-background border border-border hover:bg-accent"
@@ -553,12 +553,12 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
 
                         <div>
                           <span className="text-muted-foreground">Week</span>
-                          <div className="flex gap-1 mt-2">
+                          <div className="flex flex-wrap gap-1 mt-2">
                             {weekDays.map(day => (
                               <Badge
                                 key={day}
                                 variant={mode.weekDays.includes(day) ? "default" : "outline"}
-                                className="px-2 py-1 text-xs"
+                                className="px-2 py-1 text-xs flex-shrink-0"
                               >
                                 {day}
                               </Badge>
@@ -605,7 +605,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
                 </p>
               </div>
             </div>
-            <div className="flex gap-2">
+            <DialogFooter className="flex-col sm:flex-row gap-2">
               <Button 
                 variant="outline" 
                 onClick={() => setShowFuelRateDialog(false)}
@@ -619,7 +619,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
               >
                 Save Changes
               </Button>
-            </div>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </DialogContent>
