@@ -376,7 +376,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                   <SelectContent>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name} ({user.email}) - {user.locations.join(", ")}
+                        {user.name} ({user.email}) - {(user.locations || []).join(", ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -580,7 +580,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                         <div className="flex items-center gap-2 mt-1">
                           <MapPin className="w-3 h-3 text-muted-foreground" />
                           <div className="flex flex-wrap gap-1">
-                            {user.locations.map((loc) => (
+                            {(user.locations || []).map((loc) => (
                               <span key={loc} className="text-xs text-muted-foreground">{loc}</span>
                             ))}
                           </div>
@@ -595,7 +595,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                              <Badge variant="default">{user.role}</Badge>
                            )}
                            <div className="flex flex-wrap gap-1 justify-end">
-                             {user.locations.map((loc) => (
+                             {(user.locations || []).map((loc) => (
                                <Badge key={loc} variant="secondary" className="text-xs">
                                  {loc}
                                </Badge>
