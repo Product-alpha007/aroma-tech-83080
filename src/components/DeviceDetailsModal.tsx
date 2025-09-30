@@ -20,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 interface WorkMode {
@@ -54,6 +55,7 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
   const [deviceLocked, setDeviceLocked] = useState(false);
   const [fanLevel, setFanLevel] = useState("L2");
   const [showFanSelector, setShowFanSelector] = useState(false);
+  const [showWorkModeForm, setShowWorkModeForm] = useState(false);
   const [workModes, setWorkModes] = useState<WorkMode[]>([
     {
       id: 1,
@@ -74,6 +76,14 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
       weekDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     }
   ]);
+  const [newWorkMode, setNewWorkMode] = useState<Partial<WorkMode>>({
+    name: "",
+    time: { start: "08:00", end: "23:59" },
+    work: { duration: 150, unit: "s" },
+    pause: { duration: 5, unit: "s" },
+    weekDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+  });
+  const { toast } = useToast();
 
   const handleWorkModeToggle = (id: number) => {
     setWorkModes(modes => 
@@ -81,6 +91,51 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
         mode.id === id ? { ...mode, enabled: !mode.enabled } : mode
       )
     );
+  };
+
+  const handleCreateWorkMode = () => {
+    if (!newWorkMode.name?.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a work mode name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const workMode: WorkMode = {
+      id: Date.now(),
+      enabled: false,
+      name: newWorkMode.name,
+      time: newWorkMode.time || { start: "08:00", end: "23:59" },
+      work: newWorkMode.work || { duration: 150, unit: "s" },
+      pause: newWorkMode.pause || { duration: 5, unit: "s" },
+      weekDays: newWorkMode.weekDays || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    };
+
+    setWorkModes(prev => [...prev, workMode]);
+    setShowWorkModeForm(false);
+    setNewWorkMode({
+      name: "",
+      time: { start: "08:00", end: "23:59" },
+      work: { duration: 150, unit: "s" },
+      pause: { duration: 5, unit: "s" },
+      weekDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    });
+    
+    toast({
+      title: "Work Mode Created",
+      description: `${workMode.name} has been created successfully`
+    });
+  };
+
+  const toggleWeekDay = (day: string) => {
+    setNewWorkMode(prev => ({
+      ...prev,
+      weekDays: prev.weekDays?.includes(day)
+        ? prev.weekDays.filter(d => d !== day)
+        : [...(prev.weekDays || []), day]
+    }));
   };
 
   const fanLevels = ["OFF", "L1", "L2", "L3"];
@@ -273,10 +328,124 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
             <Card className="p-4 bg-background/50 border-border/50">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-medium text-primary">Work Mode</h3>
-                <Button size="icon" variant="ghost" className="h-8 w-8">
+                <Button 
+                  size="icon" 
+                  variant="ghost" 
+                  className="h-8 w-8"
+                  onClick={() => setShowWorkModeForm(!showWorkModeForm)}
+                >
                   <Plus className="w-4 h-4" />
                 </Button>
               </div>
+
+              {showWorkModeForm && (
+                <Card className="p-4 bg-background/30 border-border/30 mb-4">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="mode-name" className="text-sm font-medium">Name</Label>
+                      <Input
+                        id="mode-name"
+                        placeholder="Enter work mode name"
+                        value={newWorkMode.name || ""}
+                        onChange={(e) => setNewWorkMode(prev => ({ ...prev, name: e.target.value }))}
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="start-time" className="text-sm font-medium">Start Time</Label>
+                        <Input
+                          id="start-time"
+                          type="time"
+                          value={newWorkMode.time?.start || "08:00"}
+                          onChange={(e) => setNewWorkMode(prev => ({
+                            ...prev,
+                            time: { ...prev.time!, start: e.target.value }
+                          }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end-time" className="text-sm font-medium">End Time</Label>
+                        <Input
+                          id="end-time"
+                          type="time"
+                          value={newWorkMode.time?.end || "23:59"}
+                          onChange={(e) => setNewWorkMode(prev => ({
+                            ...prev,
+                            time: { ...prev.time!, end: e.target.value }
+                          }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="work-duration" className="text-sm font-medium">Work Duration (s)</Label>
+                        <Input
+                          id="work-duration"
+                          type="number"
+                          value={newWorkMode.work?.duration || 150}
+                          onChange={(e) => setNewWorkMode(prev => ({
+                            ...prev,
+                            work: { ...prev.work!, duration: Number(e.target.value) }
+                          }))}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="pause-duration" className="text-sm font-medium">Pause Duration (s)</Label>
+                        <Input
+                          id="pause-duration"
+                          type="number"
+                          value={newWorkMode.pause?.duration || 5}
+                          onChange={(e) => setNewWorkMode(prev => ({
+                            ...prev,
+                            pause: { ...prev.pause!, duration: Number(e.target.value) }
+                          }))}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label className="text-sm font-medium">Week Days</Label>
+                      <div className="flex gap-1 mt-2">
+                        {weekDays.map(day => (
+                          <button
+                            key={day}
+                            onClick={() => toggleWeekDay(day)}
+                            className={cn(
+                              "px-2 py-1 text-xs rounded transition-colors",
+                              newWorkMode.weekDays?.includes(day)
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background border border-border hover:bg-accent"
+                            )}
+                          >
+                            {day}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <Button onClick={handleCreateWorkMode} size="sm" className="flex-1">
+                        Create Mode
+                      </Button>
+                      <Button 
+                        onClick={() => setShowWorkModeForm(false)} 
+                        variant="outline" 
+                        size="sm"
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              )}
 
               <div className="space-y-4">
                 {workModes.map(mode => (
