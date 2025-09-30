@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter, Building2, Calendar } from "lucide-react";
+import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter, Building2, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -67,18 +67,72 @@ const locationStats = [
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortColumn, setSortColumn] = useState<"status" | "oilLevel" | "daysUntilRefill" | null>(null);
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Handle sorting
+  const handleSort = (column: "status" | "oilLevel" | "daysUntilRefill") => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking the same column
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      // Set new column and default to ascending
+      setSortColumn(column);
+      setSortDirection("asc");
+    }
+  };
 
   // Filter devices based on search and status
-  const filteredDevices = devicesData.filter(device => {
-    const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         device.location.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || 
-                         statusFilter === device.status ||
-                         (statusFilter === "low oil" && device.oilLevel <= 20);
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredDevices = devicesData
+    .filter(device => {
+      const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           device.location.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || 
+                           statusFilter === device.status ||
+                           (statusFilter === "low oil" && device.oilLevel <= 20);
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      if (!sortColumn) return 0;
+
+      if (sortColumn === "status") {
+        // Offline first, then online
+        const statusOrder = { offline: 0, online: 1 };
+        const comparison = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
+        return sortDirection === "asc" ? comparison : -comparison;
+      }
+
+      if (sortColumn === "oilLevel") {
+        // Ascending order of oil level
+        const comparison = a.oilLevel - b.oilLevel;
+        return sortDirection === "asc" ? comparison : -comparison;
+      }
+
+      if (sortColumn === "daysUntilRefill") {
+        // N/A first, then ascending numeric order
+        const daysA = calculateDaysUntilRefill(a.oilLevel, a.fuelRate, a.tankCapacity, a.status);
+        const daysB = calculateDaysUntilRefill(b.oilLevel, b.fuelRate, b.tankCapacity, b.status);
+        
+        // Handle N/A values
+        if (daysA === "N/A" && daysB === "N/A") return 0;
+        if (daysA === "N/A") return sortDirection === "asc" ? -1 : 1;
+        if (daysB === "N/A") return sortDirection === "asc" ? 1 : -1;
+        
+        // Extract numeric values
+        const getNumericValue = (days: string) => {
+          if (days === "<1 day") return 0.5;
+          const match = days.match(/\d+/);
+          return match ? parseInt(match[0]) : 0;
+        };
+        
+        const comparison = getNumericValue(daysA) - getNumericValue(daysB);
+        return sortDirection === "asc" ? comparison : -comparison;
+      }
+
+      return 0;
+    });
 
   const getStatusBadge = (status: string) => {
     return status === "online" ? "success" : "destructive";
@@ -109,6 +163,17 @@ export default function Dashboard() {
     const numDays = parseInt(days);
     if (!isNaN(numDays) && numDays <= 3) return "warning";
     return "default";
+  };
+
+  const getSortIcon = (column: "status" | "oilLevel" | "daysUntilRefill") => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 inline-block text-muted-foreground" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-4 h-4 ml-1 inline-block text-primary" />
+    ) : (
+      <ArrowDown className="w-4 h-4 ml-1 inline-block text-primary" />
+    );
   };
 
   return (
@@ -196,9 +261,33 @@ export default function Dashboard() {
                     <TableRow className="hover:bg-transparent border-border/50">
                       <TableHead className="font-semibold">Device Name</TableHead>
                       <TableHead className="font-semibold">Location</TableHead>
-                      <TableHead className="font-semibold">Status</TableHead>
-                      <TableHead className="font-semibold">Oil Level</TableHead>
-                      <TableHead className="font-semibold">Days Until Refill</TableHead>
+                      <TableHead 
+                        className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => handleSort("status")}
+                      >
+                        <div className="flex items-center">
+                          Status
+                          {getSortIcon("status")}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => handleSort("oilLevel")}
+                      >
+                        <div className="flex items-center">
+                          Oil Level
+                          {getSortIcon("oilLevel")}
+                        </div>
+                      </TableHead>
+                      <TableHead 
+                        className="font-semibold cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => handleSort("daysUntilRefill")}
+                      >
+                        <div className="flex items-center">
+                          Days Until Refill
+                          {getSortIcon("daysUntilRefill")}
+                        </div>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
