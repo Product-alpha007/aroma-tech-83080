@@ -202,6 +202,12 @@ export function DeviceDetailsModal({ open, onOpenChange, device }: DeviceDetails
               </div>
             </div>
 
+            {/* User Assignment */}
+            <div className="flex items-center justify-between p-4 rounded-lg bg-background/50 border border-border/50">
+              <Label className="text-muted-foreground">Assigned User</Label>
+              <span className="text-sm">Not assigned</span>
+            </div>
+
             {/* Unbind Device Button */}
             <Button variant="destructive" className="w-full" size="lg">
               Unbind Device

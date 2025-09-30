@@ -10,6 +10,7 @@ import { AddDeviceModal } from "@/components/AddDeviceModal";
 import { AddLocationModal } from "@/components/AddLocationModal";
 import { BulkOperationsModal } from "@/components/BulkOperationsModal";
 import { LocationManagerModal } from "@/components/LocationManagerModal";
+import { UserDeviceMappingModal } from "@/components/UserDeviceMappingModal";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -254,6 +255,7 @@ export default function Devices() {
                   />
                 </div>
               </div>
+              <UserDeviceMappingModal devices={devices} />
               <BulkOperationsModal onBulkUpload={handleBulkUpload} />
               <LocationManagerModal
                 locations={locationStats}
