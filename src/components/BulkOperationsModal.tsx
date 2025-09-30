@@ -99,7 +99,7 @@ export function BulkOperationsModal({ onBulkUpload }: BulkOperationsModalProps) 
       <DialogTrigger asChild>
         <Button variant="outline" size="default">
           <Upload className="w-4 h-4 mr-2" />
-          Bulk Operations
+          Bulk Add Devices
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

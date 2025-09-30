@@ -74,8 +74,6 @@ export function DeviceCard({ device, locations = [], onMapDevice, onUnmapDevice 
                 <DropdownMenuItem onClick={() => setShowDetails(true)}>
                   View Details
                 </DropdownMenuItem>
-                <DropdownMenuItem>Configure</DropdownMenuItem>
-                <DropdownMenuItem>Maintenance</DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {device.location === "unmapped" && locations.length > 0 && onMapDevice && (
                   <DropdownMenuSub>
