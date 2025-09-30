@@ -6,7 +6,7 @@ export interface User {
   email: string;
   phone?: string;
   department?: string;
-  location: string;
+  locations: string[];
   role?: string;
   permissions?: string[];
   status?: "active" | "inactive";
@@ -33,9 +33,9 @@ const initialUsers: User[] = [
     email: "john@example.com", 
     phone: "+1234567890", 
     department: "IT", 
-    location: "Location A", 
+    locations: ["Location A", "Location B"], 
     role: "Admin", 
-    permissions: ["read", "write", "delete"],
+    permissions: ["read", "write", "delete", "admin"],
     status: "active",
     lastActive: "Online now",
     joinedDate: "2023-01-15",
@@ -48,7 +48,7 @@ const initialUsers: User[] = [
     email: "jane@example.com", 
     phone: "+0987654321", 
     department: "HR", 
-    location: "Location B", 
+    locations: ["Location B"], 
     role: "Manager", 
     permissions: ["read", "write"],
     status: "active",
@@ -63,7 +63,7 @@ const initialUsers: User[] = [
     email: "mike@example.com", 
     phone: "+1122334455", 
     department: "Operations", 
-    location: "Location A", 
+    locations: ["Location A"], 
     role: "User", 
     permissions: ["read"],
     status: "active",

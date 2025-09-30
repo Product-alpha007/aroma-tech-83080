@@ -43,12 +43,12 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [newUser, setNewUser] = useState({ name: "", email: "", department: "", location: "" });
+  const [newUser, setNewUser] = useState({ name: "", email: "", department: "", locations: [] as string[] });
   const [showAddLocation, setShowAddLocation] = useState(false);
   const [newLocationName, setNewLocationName] = useState("");
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [editUserModalOpen, setEditUserModalOpen] = useState(false);
-  const [editUser, setEditUser] = useState({ role: "", department: "", location: "", permissions: [] as string[] });
+  const [editUser, setEditUser] = useState({ role: "", department: "", locations: [] as string[], permissions: [] as string[] });
   const [userToDelete, setUserToDelete] = useState<UserType | null>(null);
   const { toast } = useToast();
 
@@ -139,10 +139,10 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
   };
 
   const handleAddUser = () => {
-    if (!newUser.name.trim() || !newUser.email.trim() || !newUser.location.trim()) {
+    if (!newUser.name.trim() || !newUser.email.trim() || newUser.locations.length === 0) {
       toast({
         title: "Missing Information",
-        description: "Name, email, and location are required",
+        description: "Name, email, and at least one location are required",
         variant: "destructive",
       });
       return;
@@ -154,7 +154,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
       permissions: ["read"],
     });
 
-    setNewUser({ name: "", email: "", department: "", location: "" });
+    setNewUser({ name: "", email: "", department: "", locations: [] });
 
     toast({
       title: "User Added",
@@ -167,17 +167,17 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
     setEditUser({
       role: user.role || "",
       department: user.department || "",
-      location: user.location,
+      locations: user.locations || [],
       permissions: user.permissions || [],
     });
     setEditUserModalOpen(true);
   };
 
   const handleUpdateUser = () => {
-    if (!editUser.location.trim()) {
+    if (editUser.locations.length === 0) {
       toast({
         title: "Missing Information",
-        description: "Location is required",
+        description: "At least one location is required",
         variant: "destructive",
       });
       return;
@@ -188,12 +188,12 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
     updateUser(editingUser.id, {
       role: editUser.role,
       department: editUser.department,
-      location: editUser.location,
+      locations: editUser.locations,
       permissions: editUser.permissions,
     });
 
     setEditingUser(null);
-    setEditUser({ role: "", department: "", location: "", permissions: [] });
+    setEditUser({ role: "", department: "", locations: [], permissions: [] });
     setEditUserModalOpen(false);
 
     toast({
@@ -204,7 +204,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
 
   const handleCancelEdit = () => {
     setEditingUser(null);
-    setEditUser({ role: "", department: "", location: "", permissions: [] });
+    setEditUser({ role: "", department: "", locations: [], permissions: [] });
     setEditUserModalOpen(false);
   };
 
@@ -376,7 +376,7 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                   <SelectContent>
                     {users.map(user => (
                       <SelectItem key={user.id} value={user.id}>
-                        {user.name} ({user.email}) - {user.location}
+                        {user.name} ({user.email}) - {user.locations.join(", ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -475,24 +475,57 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Location *</Label>
+                  <Label>Locations * (Select multiple)</Label>
                   {!showAddLocation ? (
                     <div className="flex gap-2">
-                      <Select value={newUser.location} onValueChange={(value) => setNewUser(prev => ({ ...prev, location: value }))}>
-                        <SelectTrigger className="flex-1">
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locations.map(location => (
-                            <SelectItem key={location} value={location}>
-                              <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4" />
-                                {location}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex-1 space-y-2">
+                        <Select 
+                          value=""
+                          onValueChange={(value) => {
+                            if (!newUser.locations.includes(value)) {
+                              setNewUser(prev => ({ ...prev, locations: [...prev.locations, value] }));
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Add location" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {locations.filter(loc => !newUser.locations.includes(loc)).map(location => (
+                              <SelectItem key={location} value={location}>
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="w-4 h-4" />
+                                  {location}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {newUser.locations.length > 0 && (
+                          <div className="flex flex-wrap gap-2 p-2 border rounded-lg bg-muted/50">
+                            {newUser.locations.map((loc) => (
+                              <Badge 
+                                key={loc} 
+                                variant="secondary"
+                                className="gap-1"
+                              >
+                                <MapPin className="w-3 h-3" />
+                                {loc}
+                                <button
+                                  type="button"
+                                  onClick={() => setNewUser(prev => ({ 
+                                    ...prev, 
+                                    locations: prev.locations.filter(l => l !== loc) 
+                                  }))}
+                                  className="ml-1 hover:text-destructive"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <Button
                         type="button"
                         variant="outline"
@@ -546,7 +579,11 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                         {user.phone && <p className="text-xs text-muted-foreground">{user.phone}</p>}
                         <div className="flex items-center gap-2 mt-1">
                           <MapPin className="w-3 h-3 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">{user.location}</span>
+                          <div className="flex flex-wrap gap-1">
+                            {user.locations.map((loc) => (
+                              <span key={loc} className="text-xs text-muted-foreground">{loc}</span>
+                            ))}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -557,9 +594,13 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                            {user.role && (
                              <Badge variant="default">{user.role}</Badge>
                            )}
-                           <Badge variant="secondary" className="text-xs">
-                             {user.location}
-                           </Badge>
+                           <div className="flex flex-wrap gap-1 justify-end">
+                             {user.locations.map((loc) => (
+                               <Badge key={loc} variant="secondary" className="text-xs">
+                                 {loc}
+                               </Badge>
+                             ))}
+                           </div>
                          </div>
                          <Button
                            size="icon"
@@ -684,22 +725,55 @@ export function UserDeviceMappingModal({ devices, locations, onMappingUpdate, on
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Location *</Label>
-                  <Select value={editUser.location} onValueChange={(value) => setEditUser(prev => ({ ...prev, location: value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.map(location => (
-                        <SelectItem key={location} value={location}>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4" />
-                            {location}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label>Locations * (Select multiple)</Label>
+                  <div className="space-y-2">
+                    <Select 
+                      value=""
+                      onValueChange={(value) => {
+                        if (!editUser.locations.includes(value)) {
+                          setEditUser(prev => ({ ...prev, locations: [...prev.locations, value] }));
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Add location" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {locations.filter(loc => !editUser.locations.includes(loc)).map(location => (
+                          <SelectItem key={location} value={location}>
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4" />
+                              {location}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {editUser.locations.length > 0 && (
+                      <div className="flex flex-wrap gap-2 p-2 border rounded-lg bg-muted/50">
+                        {editUser.locations.map((loc) => (
+                          <Badge 
+                            key={loc} 
+                            variant="secondary"
+                            className="gap-1"
+                          >
+                            <MapPin className="w-3 h-3" />
+                            {loc}
+                            <button
+                              type="button"
+                              onClick={() => setEditUser(prev => ({ 
+                                ...prev, 
+                                locations: prev.locations.filter(l => l !== loc) 
+                              }))}
+                              className="ml-1 hover:text-destructive"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="space-y-2">

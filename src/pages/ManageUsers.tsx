@@ -16,7 +16,8 @@ import {
   Calendar,
   Clock,
   ChevronDown,
-  MapPin
+  MapPin,
+  X
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,7 +69,14 @@ export default function ManageUsers() {
     email: "",
     role: "",
     department: "",
-    location: "",
+    locations: [] as string[],
+    permissions: [] as string[]
+  });
+
+  const [editUser, setEditUser] = useState({
+    role: "",
+    department: "",
+    locations: [] as string[],
     permissions: [] as string[]
   });
 
@@ -94,7 +102,7 @@ export default function ManageUsers() {
   });
 
   const handleAddUser = () => {
-    if (!newUser.name || !newUser.email || !newUser.location) return;
+    if (!newUser.name || !newUser.email || newUser.locations.length === 0) return;
     
     addUser(newUser);
     setShowAddUserDialog(false);
@@ -103,14 +111,34 @@ export default function ManageUsers() {
       email: "",
       role: "",
       department: "",
-      location: "",
+      locations: [],
       permissions: []
     });
   };
 
   const handleEditUser = (user: any) => {
     setSelectedUser(user);
+    setEditUser({
+      role: user.role || "",
+      department: user.department || "",
+      locations: user.locations || [],
+      permissions: user.permissions || []
+    });
     setShowEditUserDialog(true);
+  };
+
+  const handleUpdateUser = () => {
+    if (!selectedUser) return;
+    
+    updateUser(selectedUser.id, editUser);
+    setShowEditUserDialog(false);
+    setSelectedUser(null);
+    setEditUser({
+      role: "",
+      department: "",
+      locations: [],
+      permissions: []
+    });
   };
 
   const handleDeleteUser = (user: any) => {
@@ -262,10 +290,18 @@ export default function ManageUsers() {
                             <span className="font-medium">{user.department}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">Location:</span>
-                          <span className="font-medium">{user.location}</span>
+                        <div className="flex items-start gap-2 text-sm">
+                          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+                          <div>
+                            <span className="text-muted-foreground">Locations:</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {user.locations?.map((loc: string) => (
+                                <Badge key={loc} variant="outline" className="text-xs">
+                                  {loc}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="space-y-3">
@@ -383,23 +419,56 @@ export default function ManageUsers() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label>Locations (Select multiple)</Label>
               <div className="flex gap-2">
-                <Select 
-                  value={newUser.location}
-                  onValueChange={(value) => setNewUser({ ...newUser, location: value })}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {locations.map((location) => (
-                      <SelectItem key={location} value={location}>
-                        {location}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex-1 space-y-2">
+                  <Select 
+                    value=""
+                    onValueChange={(value) => {
+                      if (!newUser.locations.includes(value)) {
+                        setNewUser({ ...newUser, locations: [...newUser.locations, value] });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.filter(loc => !newUser.locations.includes(loc)).map((location) => (
+                        <SelectItem key={location} value={location}>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3 h-3" />
+                            {location}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {newUser.locations.length > 0 && (
+                    <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/50">
+                      {newUser.locations.map((loc) => (
+                        <Badge 
+                          key={loc} 
+                          variant="secondary"
+                          className="gap-1"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          {loc}
+                          <button
+                            type="button"
+                            onClick={() => setNewUser({ 
+                              ...newUser, 
+                              locations: newUser.locations.filter(l => l !== loc) 
+                            })}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <AddLocationModal 
                   onAddLocation={addLocation} 
                   trigger={
@@ -454,6 +523,174 @@ export default function ManageUsers() {
             </Button>
             <Button onClick={handleAddUser}>
               Add User
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Dialog */}
+      <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>
+              Update user role, department, locations, and permissions
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {/* Non-editable fields */}
+            <div className="grid grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Full Name</Label>
+                <p className="font-medium">{selectedUser?.name}</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Email</Label>
+                <p className="font-medium">{selectedUser?.email}</p>
+              </div>
+              {selectedUser?.phone && (
+                <div className="space-y-1">
+                  <Label className="text-xs text-muted-foreground">Phone</Label>
+                  <p className="font-medium">{selectedUser.phone}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Editable fields */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-role">Role</Label>
+                <Select 
+                  value={editUser.role}
+                  onValueChange={(value) => setEditUser({ ...editUser, role: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map(role => (
+                      <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-department">Department</Label>
+                <Input
+                  id="edit-department"
+                  value={editUser.department}
+                  onChange={(e) => setEditUser({ ...editUser, department: e.target.value })}
+                  placeholder="Engineering"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Locations (Select multiple)</Label>
+              <div className="flex gap-2">
+                <div className="flex-1 space-y-2">
+                  <Select 
+                    value=""
+                    onValueChange={(value) => {
+                      if (!editUser.locations.includes(value)) {
+                        setEditUser({ ...editUser, locations: [...editUser.locations, value] });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {locations.filter(loc => !editUser.locations.includes(loc)).map((location) => (
+                        <SelectItem key={location} value={location}>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-3 h-3" />
+                            {location}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {editUser.locations.length > 0 && (
+                    <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/50">
+                      {editUser.locations.map((loc) => (
+                        <Badge 
+                          key={loc} 
+                          variant="secondary"
+                          className="gap-1"
+                        >
+                          <MapPin className="w-3 h-3" />
+                          {loc}
+                          <button
+                            type="button"
+                            onClick={() => setEditUser({ 
+                              ...editUser, 
+                              locations: editUser.locations.filter(l => l !== loc) 
+                            })}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <AddLocationModal 
+                  onAddLocation={addLocation} 
+                  trigger={
+                    <Button type="button" variant="outline" size="icon">
+                      <Plus className="w-4 h-4" />
+                    </Button>
+                  } 
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Permissions</Label>
+              <div className="grid grid-cols-2 gap-4">
+                {permissions.map(permission => (
+                  <div key={permission.id} className="flex items-start space-x-3 p-3 border rounded-lg">
+                    <Checkbox
+                      id={`edit-${permission.id}`}
+                      checked={editUser.permissions.includes(permission.id)}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setEditUser({
+                            ...editUser,
+                            permissions: [...editUser.permissions, permission.id]
+                          });
+                        } else {
+                          setEditUser({
+                            ...editUser,
+                            permissions: editUser.permissions.filter(p => p !== permission.id)
+                          });
+                        }
+                      }}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor={`edit-${permission.id}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {permission.label}
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        {permission.description}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditUserDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateUser}>
+              Update User
             </Button>
           </DialogFooter>
         </DialogContent>
