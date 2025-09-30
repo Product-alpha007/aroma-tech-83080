@@ -228,17 +228,19 @@ export default function Devices() {
   const unmappedDevices = devices.filter(device => device.location === "unmapped");
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-10">
-        <div className="container mx-auto px-4 sm:px-6 py-4">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <h1 className="text-xl sm:text-2xl font-bold">Devices & Locations</h1>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-10 overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-full">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl sm:text-2xl font-bold truncate">Devices & Locations</h1>
+            </div>
             
             {/* Search and Filters */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
-              <div className="flex items-center gap-2 flex-1 sm:flex-none">
+            <div className="flex flex-col gap-3 w-full">
+              <div className="flex items-center gap-2 w-full">
                 <Select value={searchType} onValueChange={(value: "devices" | "locations") => setSearchType(value)}>
-                  <SelectTrigger className="w-28 sm:w-32">
+                  <SelectTrigger className="w-24 sm:w-28 flex-shrink-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -246,7 +248,7 @@ export default function Devices() {
                     <SelectItem value="locations">Locations</SelectItem>
                   </SelectContent>
                 </Select>
-                <div className="relative flex-1 sm:w-48 lg:w-64">
+                <div className="relative flex-1 min-w-0">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="search"
@@ -259,8 +261,8 @@ export default function Devices() {
               </div>
               
               {/* Action Buttons - Scrollable on mobile */}
-              <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 -mx-4 px-4 sm:mx-0 sm:px-0 hide-scrollbar">
-                <div className="flex gap-2 flex-shrink-0">
+              <div className="w-full overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+                <div className="flex gap-2 min-w-max">
                   <UserDeviceMappingModal 
                     devices={devices} 
                     locations={locations}
@@ -286,7 +288,7 @@ export default function Devices() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-full">
         <div className="space-y-8">
           {sortedLocations.map(([location, devices]) => (
             <div
