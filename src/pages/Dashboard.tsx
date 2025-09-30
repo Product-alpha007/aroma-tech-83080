@@ -70,6 +70,48 @@ export default function Dashboard() {
   const [sortColumn, setSortColumn] = useState<"status" | "oilLevel" | "daysUntilRefill" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
+  const getStatusBadge = (status: string) => {
+    return status === "online" ? "success" : "destructive";
+  };
+
+  const getOilLevelBadge = (level: number) => {
+    if (level <= 20) return "destructive";
+    if (level <= 50) return "warning";
+    return "success";
+  };
+
+  // Calculate days until oil exhaustion
+  const calculateDaysUntilRefill = (oilLevel: number, fuelRate: number, tankCapacity: number, status: string) => {
+    if (status === "offline" || oilLevel === 0) return "N/A";
+    
+    const currentOilMl = (oilLevel / 100) * tankCapacity;
+    const hoursRemaining = currentOilMl / fuelRate;
+    const daysRemaining = Math.floor(hoursRemaining / 24);
+    
+    if (daysRemaining < 1) return "<1 day";
+    if (daysRemaining === 1) return "1 day";
+    return `${daysRemaining} days`;
+  };
+
+  const getDaysUntilRefillBadge = (days: string) => {
+    if (days === "N/A") return "secondary";
+    if (days === "<1 day") return "destructive";
+    const numDays = parseInt(days);
+    if (!isNaN(numDays) && numDays <= 3) return "warning";
+    return "default";
+  };
+
+  const getSortIcon = (column: "status" | "oilLevel" | "daysUntilRefill") => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-4 h-4 ml-1 inline-block text-muted-foreground" />;
+    }
+    return sortDirection === "asc" ? (
+      <ArrowUp className="w-4 h-4 ml-1 inline-block text-primary" />
+    ) : (
+      <ArrowDown className="w-4 h-4 ml-1 inline-block text-primary" />
+    );
+  };
+
   // Handle sorting
   const handleSort = (column: "status" | "oilLevel" | "daysUntilRefill") => {
     if (sortColumn === column) {
@@ -133,48 +175,6 @@ export default function Dashboard() {
 
       return 0;
     });
-
-  const getStatusBadge = (status: string) => {
-    return status === "online" ? "success" : "destructive";
-  };
-
-  const getOilLevelBadge = (level: number) => {
-    if (level <= 20) return "destructive";
-    if (level <= 50) return "warning";
-    return "success";
-  };
-
-  // Calculate days until oil exhaustion
-  const calculateDaysUntilRefill = (oilLevel: number, fuelRate: number, tankCapacity: number, status: string) => {
-    if (status === "offline" || oilLevel === 0) return "N/A";
-    
-    const currentOilMl = (oilLevel / 100) * tankCapacity;
-    const hoursRemaining = currentOilMl / fuelRate;
-    const daysRemaining = Math.floor(hoursRemaining / 24);
-    
-    if (daysRemaining < 1) return "<1 day";
-    if (daysRemaining === 1) return "1 day";
-    return `${daysRemaining} days`;
-  };
-
-  const getDaysUntilRefillBadge = (days: string) => {
-    if (days === "N/A") return "secondary";
-    if (days === "<1 day") return "destructive";
-    const numDays = parseInt(days);
-    if (!isNaN(numDays) && numDays <= 3) return "warning";
-    return "default";
-  };
-
-  const getSortIcon = (column: "status" | "oilLevel" | "daysUntilRefill") => {
-    if (sortColumn !== column) {
-      return <ArrowUpDown className="w-4 h-4 ml-1 inline-block text-muted-foreground" />;
-    }
-    return sortDirection === "asc" ? (
-      <ArrowUp className="w-4 h-4 ml-1 inline-block text-primary" />
-    ) : (
-      <ArrowDown className="w-4 h-4 ml-1 inline-block text-primary" />
-    );
-  };
 
   return (
     <div className="min-h-screen bg-background">
