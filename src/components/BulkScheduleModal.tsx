@@ -204,12 +204,12 @@ export function BulkScheduleModal({ devices = [], onApplySchedules }: BulkSchedu
           Bulk Schedules
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Bulk Schedule Management</DialogTitle>
+      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[85vw] lg:w-[80vw] xl:w-[75vw] 2xl:w-[70vw] max-w-3xl max-h-[95vh] sm:max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0 p-4 sm:p-6 pb-0">
+          <DialogTitle className="text-lg sm:text-xl md:text-2xl">Bulk Schedule Management</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
           {/* Device Selection */}
           {devices.length > 0 && (
             <Card className="p-4 bg-gradient-card border-border/50">

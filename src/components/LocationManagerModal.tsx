@@ -58,11 +58,11 @@ export function LocationManagerModal({ locations, onEditLocation, onDeleteLocati
           Manage Locations
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw] max-w-lg">
         <DialogHeader>
-          <DialogTitle>Manage Locations</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Manage Locations</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 max-h-96 overflow-y-auto">
+        <div className="space-y-3 sm:space-y-4 max-h-96 overflow-y-auto">
           {locations.length === 0 ? (
             <div className="text-center py-8">
               <MapPin className="w-12 h-12 mx-auto text-muted-foreground mb-2" />

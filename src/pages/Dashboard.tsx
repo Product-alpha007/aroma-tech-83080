@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter, Building2, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Activity, Droplet, MapPin, AlertTriangle, Search, Filter, Building2, Calendar, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -8,70 +8,148 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { useDevices, useSharedDevices } from "@/hooks/useDevices";
+import { Device } from "@/lib/api";
+import { useRealtimeDevices } from "@/hooks/useRealtimeDevices";
+import { useLocations } from "@/contexts/LocationContext";
+import { RealtimeStatusIndicator } from "@/components/RealtimeStatusIndicator";
+import { useAuth } from "@/contexts/AuthContext";
 
-const stats = [
-  {
-    title: "Total Devices",
-    value: "246",
-    change: "+12 this month",
-    icon: Droplet,
-    gradient: "from-primary to-primary-glow",
-  },
-  {
-    title: "Online Devices",
-    value: "238",
-    change: "96.7% active",
-    icon: Activity,
-    gradient: "from-success to-success/70",
-  },
-  {
-    title: "Low Fuel",
-    value: "8",
-    change: "Need refill soon",
-    icon: AlertTriangle,
-    gradient: "from-warning to-warning/70",
-  },
-  {
-    title: "Active Locations",
-    value: "18",
-    change: "+3 new",
-    icon: MapPin,
-    gradient: "from-accent to-primary",
-  },
-];
-
-const devicesData = [
-  { id: "1", name: "Reception Area Diffuser", location: "Main Office", status: "online", oilLevel: 85, fuelRate: 10, tankCapacity: 250 },
-  { id: "2", name: "Conference Room Alpha", location: "Main Office", status: "online", oilLevel: 72, fuelRate: 8, tankCapacity: 250 },
-  { id: "3", name: "Lobby Central Unit", location: "Lobby Area", status: "offline", oilLevel: 0, fuelRate: 12, tankCapacity: 300 },
-  { id: "4", name: "Executive Suite Diffuser", location: "Executive Floor", status: "online", oilLevel: 15, fuelRate: 9, tankCapacity: 200 },
-  { id: "5", name: "Cafeteria Corner Unit", location: "Cafeteria", status: "online", oilLevel: 45, fuelRate: 11, tankCapacity: 250 },
-  { id: "6", name: "Conference Room Beta", location: "Main Office", status: "online", oilLevel: 90, fuelRate: 8, tankCapacity: 250 },
-  { id: "7", name: "Reception Waiting Area", location: "Reception", status: "offline", oilLevel: 5, fuelRate: 10, tankCapacity: 200 },
-  { id: "8", name: "VIP Lounge Diffuser", location: "Executive Floor", status: "online", oilLevel: 68, fuelRate: 7, tankCapacity: 250 },
-  { id: "9", name: "Main Hallway Unit 1", location: "Main Office", status: "online", oilLevel: 35, fuelRate: 10, tankCapacity: 250 },
-  { id: "10", name: "Main Hallway Unit 2", location: "Main Office", status: "online", oilLevel: 20, fuelRate: 9, tankCapacity: 250 },
-  { id: "11", name: "Break Room Diffuser", location: "Cafeteria", status: "online", oilLevel: 55, fuelRate: 10, tankCapacity: 250 },
-  { id: "12", name: "Guest Reception Unit", location: "Reception", status: "online", oilLevel: 80, fuelRate: 8, tankCapacity: 250 },
-];
-
-const locationStats = [
-  { name: "Main Office", devices: 45, avgFuel: 82, lowFuel: 2, offline: 1 },
-  { name: "Lobby Area", devices: 32, avgFuel: 75, lowFuel: 1, offline: 0 },
-  { name: "Conference Rooms", devices: 28, avgFuel: 68, lowFuel: 3, offline: 0 },
-  { name: "Reception", devices: 15, avgFuel: 90, lowFuel: 0, offline: 1 },
-  { name: "Executive Floor", devices: 22, avgFuel: 85, lowFuel: 1, offline: 0 },
-  { name: "Cafeteria", devices: 18, avgFuel: 60, lowFuel: 2, offline: 0 },
-];
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortColumn, setSortColumn] = useState<"status" | "oilLevel" | "daysUntilRefill" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
+
+  // Fetch devices data from API
+  const { data: devicesResponse, isLoading, error } = useDevices(currentPage, pageSize);
+  const { data: sharedDevicesResponse, isLoading: isLoadingShared } = useSharedDevices();
+  const { user } = useAuth();
+  const { locations, deviceGroupsWithDevices, getDevicesByLocation } = useLocations();
+  
+  // Initialize real-time updates
+  const { isConnected } = useRealtimeDevices();
+
+  // Calculate stats from API data
+  const devices = devicesResponse?.data?.records || [];
+  const sharedDevices = sharedDevicesResponse?.data || [];
+  const allDevices = [...devices, ...sharedDevices];
+  const totalDevices = allDevices.length;
+  const onlineDevices = allDevices.filter(device => device.status === 'ONLINE').length;
+  
+  // Calculate low fuel devices using remainInfoTotal and remainInfoCurrent (API returns 10x values)
+  const lowFuelDevices = allDevices.filter(device => {
+    if (!device.remainInfoTotal || !device.remainInfoCurrent) return false;
+    const fuelPercentage = (device.remainInfoCurrent / device.remainInfoTotal) * 100;
+    return fuelPercentage <= 20;
+  }).length;
+  
+  // Calculate location stats from device groups (API-based)
+  const locationStats = locations.reduce((acc, location) => {
+    if (location === "Unmapped") {
+      // Find devices that are not in any group
+      const groupDeviceIds = (deviceGroupsWithDevices || []).flatMap(group => group.devices?.map(d => d.id) || []);
+      const unmappedDevices = allDevices.filter(device => {
+        const isInGroup = groupDeviceIds.includes(device.id);
+        return !isInGroup;
+      });
+      
+      acc[location] = {
+        name: location,
+        devices: unmappedDevices.length,
+        avgFuel: 0,
+        lowFuel: 0,
+        offline: 0,
+        totalFuel: 0,
+        deviceCount: unmappedDevices.length
+      };
+      
+      // Calculate stats for unmapped devices
+      unmappedDevices.forEach(device => {
+        const fuelPercentage = device.remainInfoTotal && device.remainInfoCurrent 
+          ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+          : 0;
+        
+        acc[location].totalFuel += fuelPercentage;
+        if (fuelPercentage <= 20) acc[location].lowFuel += 1;
+        if (device.status === 'OFFLINE') acc[location].offline += 1;
+      });
+    } else {
+      // Find devices in this group only
+      const groupDeviceIds = getDevicesByLocation(location);
+      const groupDevices = allDevices.filter(device => {
+        const isInGroup = groupDeviceIds.includes(device.id);
+        return isInGroup;
+      });
+      
+      acc[location] = {
+        name: location,
+        devices: groupDevices.length,
+        avgFuel: 0,
+        lowFuel: 0,
+        offline: 0,
+        totalFuel: 0,
+        deviceCount: groupDevices.length
+      };
+      
+      // Calculate stats for group devices
+      groupDevices.forEach(device => {
+        const fuelPercentage = device.remainInfoTotal && device.remainInfoCurrent 
+          ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+          : 0;
+        
+        acc[location].totalFuel += fuelPercentage;
+        if (fuelPercentage <= 20) acc[location].lowFuel += 1;
+        if (device.status === 'OFFLINE') acc[location].offline += 1;
+      });
+    }
+    
+    return acc;
+  }, {} as Record<string, any>);
+
+  // Calculate average fuel for each location
+  Object.values(locationStats).forEach((location: any) => {
+    location.avgFuel = location.deviceCount > 0 ? Math.round(location.totalFuel / location.deviceCount) : 0;
+  });
+
+  const activeLocations = Object.keys(locationStats).length;
+  
+  const stats = [
+    {
+      title: "Total Devices",
+      value: totalDevices.toString(),
+      change: `Page ${currentPage} of ${Math.ceil(totalDevices / pageSize)}`,
+      icon: Droplet,
+      gradient: "from-primary to-primary-glow",
+    },
+    {
+      title: "Online Devices",
+      value: onlineDevices.toString(),
+      change: `${totalDevices > 0 ? Math.round((onlineDevices / totalDevices) * 100) : 0}% active`,
+      icon: Activity,
+      gradient: "from-success to-success/70",
+    },
+    {
+      title: "Low Fuel",
+      value: lowFuelDevices.toString(),
+      change: "Need refill soon",
+      icon: AlertTriangle,
+      gradient: "from-warning to-warning/70",
+    },
+    {
+      title: "Active Locations",
+      value: activeLocations.toString(),
+      change: `${Object.values(locationStats).filter((loc: any) => loc.offline === 0).length} fully online`,
+      icon: MapPin,
+      gradient: "from-accent to-primary",
+    },
+  ];
 
   const getStatusBadge = (status: string) => {
-    return status === "online" ? "success" : "destructive";
+    return status === "ONLINE" ? "online" : "offline";
   };
 
   const getOilLevelBadge = (level: number) => {
@@ -80,17 +158,26 @@ export default function Dashboard() {
     return "success";
   };
 
-  // Calculate days until oil exhaustion
-  const calculateDaysUntilRefill = (oilLevel: number, fuelRate: number, tankCapacity: number, status: string) => {
-    if (status === "offline" || oilLevel === 0) return "N/A";
+  // Calculate days until oil exhaustion using remainInfoCurrent and remainInfoDay
+  const calculateDaysUntilRefill = (device: Device) => {
+    if (device.status === "OFFLINE" || !device.remainInfoCurrent || !device.remainInfoTotal) return "N/A";
     
-    const currentOilMl = (oilLevel / 100) * tankCapacity;
-    const hoursRemaining = currentOilMl / fuelRate;
-    const daysRemaining = Math.floor(hoursRemaining / 24);
+    // Use remainInfoDay if available, otherwise calculate from fuel percentage
+    if (device.remainInfoDay !== undefined) {
+      if (device.remainInfoDay < 1) return "<1 day";
+      if (device.remainInfoDay === 1) return "1 day";
+      return `${device.remainInfoDay} days`;
+    }
     
-    if (daysRemaining < 1) return "<1 day";
-    if (daysRemaining === 1) return "1 day";
-    return `${daysRemaining} days`;
+    // Fallback calculation using fuel percentage
+    const fuelPercentage = (device.remainInfoCurrent / device.remainInfoTotal) * 100;
+    if (fuelPercentage <= 0) return "N/A";
+    
+    // Estimate days based on fuel percentage (assuming 10% per day average consumption)
+    const estimatedDays = Math.floor(fuelPercentage / 10);
+    if (estimatedDays < 1) return "<1 day";
+    if (estimatedDays === 1) return "1 day";
+    return `${estimatedDays} days`;
   };
 
   const getDaysUntilRefillBadge = (days: string) => {
@@ -125,14 +212,20 @@ export default function Dashboard() {
   };
 
   // Filter devices based on search and status
-  const filteredDevices = devicesData
+  const filteredDevices = allDevices
     .filter(device => {
+      const location = device.address || device.city || 'Unmapped';
       const matchesSearch = device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           device.location.toLowerCase().includes(searchQuery.toLowerCase());
+                           location.toLowerCase().includes(searchQuery.toLowerCase());
+      
+      // Calculate fuel percentage for filtering
+      const fuelPercentage = device.remainInfoTotal && device.remainInfoCurrent 
+        ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+        : 0;
       
       const matchesStatus = statusFilter === "all" || 
                            statusFilter === device.status ||
-                           (statusFilter === "low oil" && device.oilLevel <= 20);
+                           (statusFilter === "low oil" && fuelPercentage <= 20);
       
       return matchesSearch && matchesStatus;
     })
@@ -140,22 +233,28 @@ export default function Dashboard() {
       if (!sortColumn) return 0;
 
       if (sortColumn === "status") {
-        // Offline first, then online
-        const statusOrder = { offline: 0, online: 1 };
+        // OFFLINE first, then ONLINE
+        const statusOrder = { OFFLINE: 0, ONLINE: 1 };
         const comparison = statusOrder[a.status as keyof typeof statusOrder] - statusOrder[b.status as keyof typeof statusOrder];
         return sortDirection === "asc" ? comparison : -comparison;
       }
 
       if (sortColumn === "oilLevel") {
-        // Ascending order of oil level
-        const comparison = a.oilLevel - b.oilLevel;
+        // Calculate fuel percentage for sorting
+        const fuelA = a.remainInfoTotal && a.remainInfoCurrent 
+          ? (a.remainInfoCurrent / a.remainInfoTotal) * 100 
+          : 0;
+        const fuelB = b.remainInfoTotal && b.remainInfoCurrent 
+          ? (b.remainInfoCurrent / b.remainInfoTotal) * 100 
+          : 0;
+        const comparison = fuelA - fuelB;
         return sortDirection === "asc" ? comparison : -comparison;
       }
 
       if (sortColumn === "daysUntilRefill") {
         // N/A first, then ascending numeric order
-        const daysA = calculateDaysUntilRefill(a.oilLevel, a.fuelRate, a.tankCapacity, a.status);
-        const daysB = calculateDaysUntilRefill(b.oilLevel, b.fuelRate, b.tankCapacity, b.status);
+        const daysA = calculateDaysUntilRefill(a);
+        const daysB = calculateDaysUntilRefill(b);
         
         // Handle N/A values
         if (daysA === "N/A" && daysB === "N/A") return 0;
@@ -176,12 +275,70 @@ export default function Dashboard() {
       return 0;
     });
 
+  // Show loading state
+  if (isLoading || isLoadingShared) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card/50 backdrop-blur-lg">
+          <div className="container mx-auto px-6 py-4">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">Monitor and manage your aroma diffuser network</p>
+          </div>
+        </header>
+        <main className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>Loading devices...</span>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background">
+        <header className="border-b border-border bg-card/50 backdrop-blur-lg">
+          <div className="container mx-auto px-6 py-4">
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">Monitor and manage your aroma diffuser network</p>
+          </div>
+        </header>
+        <main className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Failed to load devices</h2>
+              <p className="text-muted-foreground">Please try refreshing the page or contact support.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/50 backdrop-blur-lg">
         <div className="container mx-auto px-6 py-4">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Monitor and manage your aroma diffuser network</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">Dashboard</h1>
+              <p className="text-muted-foreground">Monitor and manage your aroma diffuser network</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={cn(
+                "w-2 h-2 rounded-full",
+                isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+              )} />
+              <span className="text-sm text-muted-foreground">
+                {isConnected ? "Live Updates" : "Connecting..."}
+              </span>
+            </div>
+          </div>
         </div>
       </header>
 
@@ -247,8 +404,8 @@ export default function Dashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="online">Online</SelectItem>
-                      <SelectItem value="offline">Offline</SelectItem>
+                      <SelectItem value="ONLINE">Online</SelectItem>
+                      <SelectItem value="OFFLINE">Offline</SelectItem>
                       <SelectItem value="low oil">Low Oil</SelectItem>
                     </SelectContent>
                   </Select>
@@ -304,34 +461,42 @@ export default function Dashboard() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <MapPin className="w-4 h-4 text-muted-foreground" />
-                            {device.location}
+                            {device.location || device.address || device.city || 'unmapped'}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusBadge(device.status)} className="capitalize">
-                            {device.status}
-                          </Badge>
+                          <RealtimeStatusIndicator 
+                            deviceId={device.id}
+                            status={device.status}
+                            lastSeen={device.onlineTime ? new Date(device.onlineTime).toISOString() : undefined}
+                          />
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="flex-1 max-w-20">
                               <Progress 
-                                value={device.oilLevel} 
+                                value={device.remainInfoTotal && device.remainInfoCurrent 
+                                  ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+                                  : 0} 
                                 className="h-2"
                               />
                             </div>
-                            <Badge variant={getOilLevelBadge(device.oilLevel)} className="min-w-12 text-center">
-                              {device.oilLevel}%
+                            <Badge variant={getOilLevelBadge(device.remainInfoTotal && device.remainInfoCurrent 
+                              ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+                              : 0)} className="min-w-12 text-center">
+                              {device.remainInfoTotal && device.remainInfoCurrent 
+                                ? Math.round((device.remainInfoCurrent / device.remainInfoTotal) * 100)
+                                : 0}%
                             </Badge>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge 
-                            variant={getDaysUntilRefillBadge(calculateDaysUntilRefill(device.oilLevel, device.fuelRate, device.tankCapacity, device.status))}
+                            variant={getDaysUntilRefillBadge(calculateDaysUntilRefill(device))}
                             className="gap-1"
                           >
                             <Calendar className="w-3 h-3" />
-                            {calculateDaysUntilRefill(device.oilLevel, device.fuelRate, device.tankCapacity, device.status)}
+                            {calculateDaysUntilRefill(device)}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -360,7 +525,7 @@ export default function Dashboard() {
                 <h2 className="text-lg font-semibold">Location Stats</h2>
               </div>
               <div className="space-y-6">
-                {locationStats.map((location, index) => (
+                {Object.values(locationStats).map((location: any, index) => (
                   <div 
                     key={location.name} 
                     className={cn(

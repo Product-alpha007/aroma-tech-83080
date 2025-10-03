@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { MoreVertical, Droplet, Activity, MapPin, Unlink } from "lucide-react";
+import { useState, useMemo } from "react";
+import { MoreVertical, Droplet, Activity, Power } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -7,39 +7,37 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { DeviceDetailsModal } from "@/components/DeviceDetailsModal";
+import { RealtimeStatusIndicator } from "@/components/RealtimeStatusIndicator";
+import { Device } from "@/lib/api";
 
 interface DeviceCardProps {
-  device: {
-    id: string;
-    name: string;
-    deviceId: string;
-    status: "online" | "offline";
-    fuelLevel: number;
-    fuelRate: string;
-    location: string;
-  };
-  locations?: string[];
-  onMapDevice?: (deviceId: string, location: string) => void;
-  onUnmapDevice?: (deviceId: string) => void;
+  device: Device;
 }
 
-export function DeviceCard({ device, locations = [], onMapDevice, onUnmapDevice }: DeviceCardProps) {
+export function DeviceCard({ device }: DeviceCardProps) {
   const [showDetails, setShowDetails] = useState(false);
 
-  // Extend device data for the modal
-  const extendedDevice = {
+  // Get the current location for this device (from API data)
+  const currentLocation = device.location || device.address || device.city || 'unmapped';
+
+  // Extend device data for the modal - memoized to prevent unnecessary re-renders
+  const extendedDevice = useMemo(() => ({
     ...device,
-    serialNumber: "d427879e3b00",
-    fuelCapacity: 400,
-  };
+    deviceId: device.sn,
+    serialNumber: device.sn,
+    fuelLevel: device.remainInfoTotal && device.remainInfoCurrent 
+      ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+      : 0,
+    fuelCapacity: device.remainInfoTotal || 400,
+    fuelRate: "10 mL/Hr", // Default value since not in API response
+    location: currentLocation,
+    status: device.status === "ONLINE" ? "online" : "offline" as "online" | "offline",
+  }), [device, currentLocation]);
 
   return (
     <>
@@ -61,7 +59,7 @@ export function DeviceCard({ device, locations = [], onMapDevice, onUnmapDevice 
               </div>
               <div>
                 <h3 className="font-medium text-foreground">{device.name}</h3>
-                <p className="text-xs text-muted-foreground">ID: {device.deviceId}</p>
+                <p className="text-xs text-muted-foreground">SN: {device.sn}</p>
               </div>
             </div>
             <DropdownMenu>
@@ -74,33 +72,6 @@ export function DeviceCard({ device, locations = [], onMapDevice, onUnmapDevice 
                 <DropdownMenuItem onClick={() => setShowDetails(true)}>
                   View Details
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {device.location === "unmapped" && locations.length > 0 && onMapDevice && (
-                  <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Map to Location
-                    </DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                      {locations.map((location) => (
-                        <DropdownMenuItem 
-                          key={location}
-                          onClick={() => onMapDevice(device.id, location)}
-                        >
-                          {location}
-                        </DropdownMenuItem>
-                      ))}
-                    </DropdownMenuSubContent>
-                  </DropdownMenuSub>
-                )}
-                {device.location !== "unmapped" && onUnmapDevice && (
-                  <DropdownMenuItem onClick={() => onUnmapDevice(device.id)}>
-                    <Unlink className="w-4 h-4 mr-2" />
-                    Unmap from Location
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">Disable</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -108,26 +79,34 @@ export function DeviceCard({ device, locations = [], onMapDevice, onUnmapDevice 
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Status</span>
-              <Badge variant={device.status === "online" ? "online" : "offline"}>
-                {device.status === "online" ? "Online" : "Offline"}
-              </Badge>
+              <RealtimeStatusIndicator 
+                deviceId={device.id}
+                status={device.status}
+                lastSeen={device.onlineTime ? new Date(device.onlineTime).toISOString() : undefined}
+              />
             </div>
 
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Fuel Rate</span>
+              <span className="text-sm text-muted-foreground">Remaining Days</span>
               <div className="flex items-center gap-1">
                 <Activity className="w-3 h-3 text-primary" />
-                <span className="text-sm font-medium">{device.fuelRate}</span>
+                <span className="text-sm font-medium">{device.remainInfoDay || 0} days</span>
               </div>
             </div>
 
             <div className="space-y-1">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Fuel Level</span>
-                <span className="text-sm font-medium">{device.fuelLevel}%</span>
+                <span className="text-sm font-medium">
+                  {device.remainInfoTotal && device.remainInfoCurrent 
+                    ? Math.round((device.remainInfoCurrent / device.remainInfoTotal) * 100)
+                    : 0}%
+                </span>
               </div>
               <Progress 
-                value={device.fuelLevel} 
+                value={device.remainInfoTotal && device.remainInfoCurrent 
+                  ? (device.remainInfoCurrent / device.remainInfoTotal) * 100 
+                  : 0} 
                 className="h-2 bg-secondary"
               />
             </div>
@@ -138,10 +117,12 @@ export function DeviceCard({ device, locations = [], onMapDevice, onUnmapDevice 
       </div>
 
       <DeviceDetailsModal 
+        key={device.id}
         open={showDetails}
         onOpenChange={setShowDetails}
         device={extendedDevice}
       />
+
     </>
   );
 }

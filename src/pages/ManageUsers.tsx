@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { 
   Users, 
   Plus, 
@@ -17,7 +17,8 @@ import {
   Clock,
   ChevronDown,
   MapPin,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,119 +39,245 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
-import { useUsers } from "@/contexts/UserContext";
 import { useLocations } from "@/contexts/LocationContext";
 import { AddLocationModal } from "@/components/AddLocationModal";
+import { aromaAPI, SubAccount } from "@/lib/api";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ManageUsers() {
-  const { users, addUser, updateUser, removeUser } = useUsers();
   const { locations, addLocation } = useLocations();
+  const { toast } = useToast();
+  const [users, setUsers] = useState<SubAccount[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedRole, setSelectedRole] = useState("all");
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);
   const [showEditUserDialog, setShowEditUserDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showManageDevicesDialog, setShowManageDevicesDialog] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedUser, setSelectedUser] = useState<SubAccount | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
 
   const [newUser, setNewUser] = useState({
-    name: "",
     email: "",
-    role: "",
-    department: "",
-    locations: [] as string[],
-    permissions: [] as string[]
+    password: ""
   });
 
   const [editUser, setEditUser] = useState({
-    role: "",
-    department: "",
-    locations: [] as string[],
-    permissions: [] as string[]
+    email: "",
+    password: "",
+    username: ""
   });
 
-  const roles = [
-    "Admin",
-    "Manager", 
-    "User",
-    "Viewer"
-  ];
 
-  const permissions = [
-    { id: "read", label: "View Devices", description: "Can view device status and data" },
-    { id: "write", label: "Edit Settings", description: "Can modify device settings" },
-    { id: "delete", label: "Delete Access", description: "Can delete devices and data" },
-    { id: "admin", label: "Admin Access", description: "Full administrative privileges" }
-  ];
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await aromaAPI.getSubAccounts();
+      if (response.success && response.data) {
+        setUsers(response.data);
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to fetch users",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch users. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
+  // Fetch users from API
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = selectedRole === "all" || user.role === selectedRole;
-    return matchesSearch && matchesRole;
+    const matchesSearch = (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (user.account || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
-  const handleAddUser = () => {
-    if (!newUser.name || !newUser.email || newUser.locations.length === 0) return;
-    
-    addUser(newUser);
+  const handleAddUser = async () => {
+    if (!newUser.email || !newUser.password) {
+      toast({
+        title: "Missing Information",
+        description: "Email and password are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await aromaAPI.createSubAccount({
+        account: newUser.email,
+        password: newUser.password,
+        name: newUser.email,
+        permissions: ["read"]
+      });
+
+      if (response.success && response.data) {
+        // Enable the newly created sub account
+        try {
+          const enableResponse = await aromaAPI.enableSubAccount(response.data.id);
+          if (!enableResponse.success) {
+            console.warn('Failed to enable sub account:', enableResponse.error);
+          }
+        } catch (enableError) {
+          console.warn('Error enabling sub account:', enableError);
+        }
+
+        setUsers(prev => [...prev, response.data!]);
     setShowAddUserDialog(false);
     setNewUser({
-      name: "",
       email: "",
-      role: "",
-      department: "",
-      locations: [],
-      permissions: []
-    });
+          password: ""
+        });
+        toast({
+          title: "User Added",
+          description: `${newUser.email} has been created and enabled successfully`,
+        });
+      } else {
+        // Handle specific Chinese error messages
+        let errorMessage = response.error || "Failed to create user";
+        if (errorMessage.includes("账号已存在")) {
+          errorMessage = "An account with this email already exists. Please try signing in instead.";
+        }
+        
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error creating user:', error);
+      
+      // Handle Chinese error messages in catch block
+      let errorMessage = "Failed to create user. Please try again.";
+      if (error?.response?.data?.error?.includes("账号已存在")) {
+        errorMessage = "An account with this email already exists. Please try signing in instead.";
+      } else if (error?.message?.includes("账号已存在")) {
+        errorMessage = "An account with this email already exists. Please try signing in instead.";
+      }
+      
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleEditUser = (user: any) => {
+  const handleEditUser = (user: SubAccount) => {
     setSelectedUser(user);
     setEditUser({
-      role: user.role || "",
-      department: user.department || "",
-      locations: user.locations || [],
-      permissions: user.permissions || []
+      email: user.account || "",
+      password: "",
+      username: user.account ? user.account.split('@')[0] : ""
     });
     setShowEditUserDialog(true);
   };
 
-  const handleUpdateUser = () => {
+  const handleUpdateUser = async () => {
     if (!selectedUser) return;
     
-    updateUser(selectedUser.id, editUser);
+    if (!editUser.email || !editUser.username || !editUser.password) {
+      toast({
+        title: "Missing Information",
+        description: "Email, username, and password are required",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Include email, username, and password as per API specification
+      const updateData = {
+        email: editUser.email,
+        username: editUser.username,
+        password: editUser.password
+      };
+      console.log('🔄 Updating sub account with all fields:', selectedUser.id, updateData);
+      
+      const response = await aromaAPI.updateSubAccount(selectedUser.id, updateData);
+
+      if (response.success && response.data) {
+        setUsers(prev => prev.map(user => 
+          user.id === selectedUser.id ? response.data! : user
+        ));
     setShowEditUserDialog(false);
     setSelectedUser(null);
-    setEditUser({
-      role: "",
-      department: "",
-      locations: [],
-      permissions: []
-    });
+        toast({
+          title: "User Updated",
+          description: "User has been updated successfully",
+        });
+      } else {
+        console.error('❌ Update failed:', response);
+        toast({
+          title: "Error",
+          description: response.error || "Failed to update user",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error updating user:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        stack: error.stack,
+        response: error.response
+      });
+      toast({
+        title: "Error",
+        description: "Failed to update user. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
-  const handleDeleteUser = (user: any) => {
+  const handleDeleteUser = (user: SubAccount) => {
     setSelectedUser(user);
     setShowDeleteDialog(true);
   };
 
-  const confirmDeleteUser = () => {
-    if (selectedUser) {
-      removeUser(selectedUser.id);
+  const confirmDeleteUser = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      const response = await aromaAPI.deleteSubAccount(selectedUser.id);
+      
+      if (response.success) {
+        setUsers(prev => prev.filter(user => user.id !== selectedUser.id));
       setShowDeleteDialog(false);
       setSelectedUser(null);
+        toast({
+          title: "User Deleted",
+          description: "User has been deleted successfully",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: response.error || "Failed to delete user",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete user. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -184,23 +311,24 @@ export default function ManageUsers() {
                 className="pl-9 bg-background/50"
               />
             </div>
-            <Select value={selectedRole} onValueChange={setSelectedRole}>
-              <SelectTrigger className="w-full sm:w-[200px] bg-background/50">
-                <SelectValue placeholder="Filter by role" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Roles</SelectItem>
-                {roles.map(role => (
-                  <SelectItem key={role} value={role}>{role}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         </Card>
 
         {/* Users Grid */}
         <div className="grid gap-4">
-          {filteredUsers.map((user) => (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin" />
+              <span className="ml-2">Loading users...</span>
+            </div>
+          ) : filteredUsers.length === 0 ? (
+            <Card className="p-8 text-center">
+              <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No users found</h3>
+              <p className="text-muted-foreground">Try adjusting your search or add a new user.</p>
+            </Card>
+          ) : (
+            filteredUsers.map((user) => (
             <Card 
               key={user.id} 
               className={cn(
@@ -211,34 +339,29 @@ export default function ManageUsers() {
             >
               <div className="p-6">
                 <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4 flex-1">
+                  <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
                     <div className={cn(
-                      "w-12 h-12 rounded-full flex items-center justify-center",
-                      "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground font-semibold text-lg"
+                      "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0",
+                      "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground font-semibold text-sm sm:text-lg"
                     )}>
-                      {user.name.split(' ').map((n: string) => n[0]).join('')}
+                        {(user.name || (user.account ? user.account.split('@')[0] : '') || 'U').split(' ').map((n: string) => n[0]).join('')}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-1">
-                        <h3 className="font-semibold text-lg">{user.name}</h3>
-                        <Badge variant={user.status === "active" ? "default" : "secondary"}>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+                          <h3 className="font-semibold text-base sm:text-lg truncate">{user.name || (user.account ? user.account.split('@')[0] : '') || 'Unknown User'}</h3>
+                        <Badge variant={user.status === "active" ? "default" : "secondary"} className="w-fit">
                           {user.status || "active"}
                         </Badge>
-                        <Badge variant="outline" className="hidden sm:inline-flex">
-                          {user.role}
-                        </Badge>
                       </div>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1 truncate">
+                          <Mail className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{user.account || 'No account'}</span>
+                      </div>
                         <div className="flex items-center gap-1">
-                          <Mail className="w-3 h-3" />
-                          {user.email}
-                        </div>
-                        {user.phone && (
-                          <div className="flex items-center gap-1 hidden md:flex">
-                            <Phone className="w-3 h-3" />
-                            {user.phone}
+                            <Calendar className="w-3 h-3 flex-shrink-0" />
+                            <span className="whitespace-nowrap">{user.createDate ? new Date(user.createDate).toLocaleDateString('en-GB') : 'Unknown date'}</span>
                           </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -281,60 +404,56 @@ export default function ManageUsers() {
 
                 {expandedUser === user.id && (
                   <div className="mt-4 pt-4 border-t border-border/50 animate-fade-in">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       <div className="space-y-3">
-                        {user.department && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Building2 className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Department:</span>
-                            <span className="font-medium">{user.department}</span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Building2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground">Account:</span>
                           </div>
-                        )}
-                        <div className="flex items-start gap-2 text-sm">
-                          <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
-                          <div>
-                            <span className="text-muted-foreground">Locations:</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {user.locations?.map((loc: string) => (
-                                <Badge key={loc} variant="outline" className="text-xs">
-                                  {loc}
-                                </Badge>
-                              ))}
+                            <span className="font-medium truncate">{user.account || 'N/A'}</span>
                             </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-muted-foreground">Status:</span>
                           </div>
+                          <span className="font-medium capitalize">{user.status || 'Unknown'}</span>
                         </div>
                       </div>
                       <div className="space-y-3">
-                        {user.joinedDate && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Calendar className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Joined:</span>
-                            <span className="font-medium">{user.joinedDate}</span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground">Created:</span>
+                            </div>
+                            <span className="font-medium">
+                              {user.createDate ? new Date(user.createDate).toLocaleDateString('en-GB') : 'Unknown'}
+                            </span>
                           </div>
-                        )}
-                        {user.lastActive && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Last Active:</span>
-                            <span className="font-medium">{user.lastActive}</span>
+                          <div className="flex flex-col gap-1 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground">User ID:</span>
+                            </div>
+                            <span className="font-medium font-mono text-xs break-all">{user.id}</span>
                           </div>
-                        )}
+                          </div>
+                      <div className="space-y-3 sm:col-span-2 lg:col-span-1">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Droplet className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground">Type:</span>
+                          </div>
+                            <span className="font-medium">Sub Account</span>
                       </div>
-                      <div className="space-y-3">
-                        {user.devicesAssigned !== undefined && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Droplet className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Devices:</span>
-                            <span className="font-medium">{user.devicesAssigned} assigned</span>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Share2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                              <span className="text-muted-foreground">Name:</span>
                           </div>
-                        )}
-                        {user.devicesShared !== undefined && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Share2 className="w-4 h-4 text-muted-foreground" />
-                            <span className="text-muted-foreground">Shared:</span>
-                            <span className="font-medium">{user.devicesShared} devices</span>
+                            <span className="font-medium truncate">{user.name || (user.account ? user.account.split('@')[0] : '') || 'Unknown'}</span>
                           </div>
-                        )}
                       </div>
                     </div>
                     {user.permissions && user.permissions.length > 0 && (
@@ -356,13 +475,14 @@ export default function ManageUsers() {
                 )}
               </div>
             </Card>
-          ))}
+          ))
+        )}
         </div>
       </main>
 
       {/* Add User Dialog */}
       <Dialog open={showAddUserDialog} onOpenChange={setShowAddUserDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto modal-scrollbar">
           <DialogHeader>
             <DialogTitle>Add New User</DialogTitle>
             <DialogDescription>
@@ -372,16 +492,7 @@ export default function ManageUsers() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  value={newUser.name}
-                  onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                  placeholder="John Doe"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">Email *</Label>
                 <Input
                   id="email"
                   type="email"
@@ -390,130 +501,15 @@ export default function ManageUsers() {
                   placeholder="john@company.com"
                 />
               </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select 
-                  value={newUser.role}
-                  onValueChange={(value) => setNewUser({ ...newUser, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(role => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
+                <Label htmlFor="password">Password *</Label>
                 <Input
-                  id="department"
-                  value={newUser.department}
-                  onChange={(e) => setNewUser({ ...newUser, department: e.target.value })}
-                  placeholder="Engineering"
+                  id="password"
+                  type="password"
+                  value={newUser.password}
+                  onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
+                  placeholder="Enter password"
                 />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Locations (Select multiple)</Label>
-              <div className="flex gap-2">
-                <div className="flex-1 space-y-2">
-                  <Select 
-                    value=""
-                    onValueChange={(value) => {
-                      if (!newUser.locations.includes(value)) {
-                        setNewUser({ ...newUser, locations: [...newUser.locations, value] });
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Add location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.filter(loc => !newUser.locations.includes(loc)).map((location) => (
-                        <SelectItem key={location} value={location}>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-3 h-3" />
-                            {location}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {newUser.locations.length > 0 && (
-                    <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/50">
-                      {newUser.locations.map((loc) => (
-                        <Badge 
-                          key={loc} 
-                          variant="secondary"
-                          className="gap-1"
-                        >
-                          <MapPin className="w-3 h-3" />
-                          {loc}
-                          <button
-                            type="button"
-                            onClick={() => setNewUser({ 
-                              ...newUser, 
-                              locations: newUser.locations.filter(l => l !== loc) 
-                            })}
-                            className="ml-1 hover:text-destructive"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <AddLocationModal 
-                  onAddLocation={addLocation} 
-                  trigger={
-                    <Button type="button" variant="outline" size="icon">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  } 
-                />
-              </div>
-            </div>
-            <div className="space-y-3">
-              <Label>Permissions</Label>
-              <div className="grid grid-cols-2 gap-4">
-                {permissions.map(permission => (
-                  <div key={permission.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                    <Checkbox
-                      id={permission.id}
-                      checked={newUser.permissions.includes(permission.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setNewUser({
-                            ...newUser,
-                            permissions: [...newUser.permissions, permission.id]
-                          });
-                        } else {
-                          setNewUser({
-                            ...newUser,
-                            permissions: newUser.permissions.filter(p => p !== permission.id)
-                          });
-                        }
-                      }}
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor={permission.id}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {permission.label}
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        {permission.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
@@ -530,159 +526,44 @@ export default function ManageUsers() {
 
       {/* Edit User Dialog */}
       <Dialog open={showEditUserDialog} onOpenChange={setShowEditUserDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto modal-scrollbar">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Update user role, department, locations, and permissions
+              Update user account information
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            {/* Non-editable fields */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Full Name</Label>
-                <p className="font-medium">{selectedUser?.name}</p>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Email</Label>
-                <p className="font-medium">{selectedUser?.email}</p>
-              </div>
-              {selectedUser?.phone && (
-                <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Phone</Label>
-                  <p className="font-medium">{selectedUser.phone}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Editable fields */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-role">Role</Label>
-                <Select 
-                  value={editUser.role}
-                  onValueChange={(value) => setEditUser({ ...editUser, role: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {roles.map(role => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                 <Label htmlFor="edit-email">Email *</Label>
+                 <Input
+                   id="edit-email"
+                   type="email"
+                   value={editUser.email}
+                   onChange={(e) => setEditUser({ ...editUser, email: e.target.value })}
+                   placeholder="john@company.com"
+                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-department">Department</Label>
+                 <Label htmlFor="edit-username">Username *</Label>
                 <Input
-                  id="edit-department"
-                  value={editUser.department}
-                  onChange={(e) => setEditUser({ ...editUser, department: e.target.value })}
-                  placeholder="Engineering"
+                   id="edit-username"
+                   value={editUser.username}
+                   onChange={(e) => setEditUser({ ...editUser, username: e.target.value })}
+                   placeholder="john_doe"
                 />
               </div>
             </div>
-
             <div className="space-y-2">
-              <Label>Locations (Select multiple)</Label>
-              <div className="flex gap-2">
-                <div className="flex-1 space-y-2">
-                  <Select 
-                    value=""
-                    onValueChange={(value) => {
-                      if (!editUser.locations.includes(value)) {
-                        setEditUser({ ...editUser, locations: [...editUser.locations, value] });
-                      }
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Add location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {locations.filter(loc => !editUser.locations.includes(loc)).map((location) => (
-                        <SelectItem key={location} value={location}>
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-3 h-3" />
-                            {location}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {editUser.locations.length > 0 && (
-                    <div className="flex flex-wrap gap-2 p-3 border rounded-lg bg-muted/50">
-                      {editUser.locations.map((loc) => (
-                        <Badge 
-                          key={loc} 
-                          variant="secondary"
-                          className="gap-1"
-                        >
-                          <MapPin className="w-3 h-3" />
-                          {loc}
-                          <button
-                            type="button"
-                            onClick={() => setEditUser({ 
-                              ...editUser, 
-                              locations: editUser.locations.filter(l => l !== loc) 
-                            })}
-                            className="ml-1 hover:text-destructive"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <AddLocationModal 
-                  onAddLocation={addLocation} 
-                  trigger={
-                    <Button type="button" variant="outline" size="icon">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                  } 
-                />
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Permissions</Label>
-              <div className="grid grid-cols-2 gap-4">
-                {permissions.map(permission => (
-                  <div key={permission.id} className="flex items-start space-x-3 p-3 border rounded-lg">
-                    <Checkbox
-                      id={`edit-${permission.id}`}
-                      checked={editUser.permissions.includes(permission.id)}
-                      onCheckedChange={(checked) => {
-                        if (checked) {
-                          setEditUser({
-                            ...editUser,
-                            permissions: [...editUser.permissions, permission.id]
-                          });
-                        } else {
-                          setEditUser({
-                            ...editUser,
-                            permissions: editUser.permissions.filter(p => p !== permission.id)
-                          });
-                        }
-                      }}
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                      <label
-                        htmlFor={`edit-${permission.id}`}
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        {permission.label}
-                      </label>
-                      <p className="text-xs text-muted-foreground">
-                        {permission.description}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+               <Label htmlFor="edit-password">Password *</Label>
+               <Input
+                 id="edit-password"
+                 type="password"
+                 value={editUser.password}
+                 onChange={(e) => setEditUser({ ...editUser, password: e.target.value })}
+                 placeholder="Enter password"
+               />
             </div>
           </div>
           <DialogFooter>

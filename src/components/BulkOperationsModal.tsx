@@ -102,9 +102,9 @@ export function BulkOperationsModal({ onBulkUpload }: BulkOperationsModalProps) 
           Bulk Add Devices
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw] max-w-md">
         <DialogHeader>
-          <DialogTitle>Bulk Device Operations</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Bulk Device Operations</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="upload" className="w-full">
           <TabsList className="grid w-full grid-cols-2">

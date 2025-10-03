@@ -1,0 +1,2716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aroma Tech API Integration Guide for Frontend Developers</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #34495e;
+            margin-top: 25px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .method {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9em;
+        }
+        .post { background-color: #28a745; }
+        .get { background-color: #007bff; }
+        .patch { background-color: #ffc107; color: black; }
+        .delete { background-color: #dc3545; }
+        
+        pre {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        code {
+            background: #f1f3f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Consolas', monospace;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .toc {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .toc ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .toc li {
+            margin: 5px 0;
+        }
+        .toc a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        .auth-flow {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .flow-step {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .header-example {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+
+        /* Location Dashboard Styles */
+        .location-block {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            background: #f9f9f9;
+        }
+
+        .location-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .location-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .device-count {
+            background: #007bff;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .edit-group-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+        }
+
+        .edit-group-btn:hover {
+            background: #0056b3;
+        }
+
+        .delete-group-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .delete-group-btn:hover {
+            background: #c82333;
+        }
+
+        .devices-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .device-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            cursor: pointer;
+            transition: box-shadow 0.2s;
+        }
+
+        .device-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .device-status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .device-status.online {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .device-status.offline {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Aroma Tech API Integration Guide</h1>
+        <p style="text-align: center; font-size: 1.1em; color: #666;">
+            Complete guide for frontend developers to integrate with Aroma Tech IoT Platform
+        </p>
+
+        <div class="toc">
+            <h3>📋 Table of Contents</h3>
+            <ul>
+                <li><a href="#overview">1. Overview & Architecture</a></li>
+                <li><a href="#authentication">2. Authentication Flow</a></li>
+                <li><a href="#base-config">3. Base Configuration</a></li>
+                <li><a href="#user-apis">4. User Management APIs</a></li>
+                <li><a href="#device-apis">5. Device Management APIs</a></li>
+                <li><a href="#device-group-apis">6. Device Group APIs</a></li>
+                <li><a href="#sub-account-apis">7. Sub-Account APIs</a></li>
+                <li><a href="#file-apis">8. File Upload APIs</a></li>
+                <li><a href="#bulk-apis">9. Bulk Device Upload APIs</a></li>
+                <li><a href="#error-handling">10. Error Handling</a></li>
+                <li><a href="#examples">11. Complete Examples</a></li>
+                <li><a href="#troubleshooting">12. Troubleshooting</a></li>
+            </ul>
+        </div>
+
+        <h2 id="overview">🏗️ 1. Overview & Architecture</h2>
+        
+        <div class="info">
+            <strong>🎯 What is Aroma Tech Backend?</strong><br>
+            Aroma Tech is a Django REST API that acts as a <strong>smart proxy</strong> between your frontend application and the external Aroma IoT platform. It provides a clean, standardized interface for managing IoT devices, users, and device groups.
+        </div>
+
+        <h3>🔄 Architecture Flow</h3>
+        <div class="auth-flow">
+            <div class="flow-step">
+                <strong>Step 1:</strong> Frontend sends request to Django API
+            </div>
+            <div class="flow-step">
+                <strong>Step 2:</strong> Django validates request & checks authentication
+            </div>
+            <div class="flow-step">
+                <strong>Step 3:</strong> Django forwards request to external Aroma API
+            </div>
+            <div class="flow-step">
+                <strong>Step 4:</strong> External API processes request & returns response
+            </div>
+            <div class="flow-step">
+                <strong>Step 5:</strong> Django returns formatted response to frontend
+            </div>
+        </div>
+
+        <h3>✨ Key Features</h3>
+        <ul>
+            <li><strong>🔄 Automatic Retries:</strong> Network failures are automatically retried with exponential backoff</li>
+            <li><strong>🔐 Token Management:</strong> Secure token storage and automatic refresh</li>
+            <li><strong>⚡ Error Standardization:</strong> Consistent error responses across all endpoints</li>
+            <li><strong>📊 Request Validation:</strong> Input validation using Django REST Framework serializers</li>
+            <li><strong>🔍 AllowAny Permissions:</strong> Currently configured for easy integration (update for production)</li>
+        </ul>
+
+        <h2 id="authentication">🔐 2. Authentication Flow</h2>
+
+        <div class="warning">
+            <strong>⚠️ Important:</strong> Authentication has been simplified with <code>AllowAny</code> permissions. Only the Aroma-Token header is required for API calls.
+        </div>
+
+        <h3>🎫 Getting Started</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span>
+            <strong>/api/v1/login/</strong>
+            <p>First, you need to login to get an Aroma token:</p>
+            
+            <div class="header-example">
+                <strong>Request Headers:</strong>
+                <pre>Content-Type: application/json</pre>
+            </div>
+
+            <strong>Request Body:</strong>
+            <pre>{
+  "aroma_account": "your.email@example.com",
+  "password": "your_password"
+}</pre>
+
+            <strong>Success Response:</strong>
+            <pre>{
+  "token": "93ab56e77d5bf544f44904eec9f18f84:a31156b129cc17f8f4ce2bd7316a3911"
+}</pre>
+
+            <strong>Error Response:</strong>
+            <pre>{
+  "detail": "[code=500] 用户不存在"
+}</pre>
+        </div>
+
+        <h3>🔑 Using the Token</h3>
+        <p>Once you have the token, include it in all subsequent API calls:</p>
+        <div class="header-example">
+            <strong>Required Header for All API Calls:</strong>
+            <pre>Aroma-Token: 93ab56e77d5bf544f44904eec9f18f84:a31156b129cc17f8f4ce2bd7316a3911</pre>
+        </div>
+
+        <h2 id="base-config">⚙️ 3. Base Configuration</h2>
+
+        <table>
+            <tr>
+                <th>Setting</th>
+                <th>Value</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td><strong>Base URL</strong></td>
+                <td><code>http://localhost:8000/api/</code></td>
+                <td>Django API base URL (development)</td>
+            </tr>
+            <tr>
+                <td><strong>Content-Type</strong></td>
+                <td><code>application/json</code></td>
+                <td>Required for all POST/PATCH requests</td>
+            </tr>
+            <tr>
+                <td><strong>Timeout</strong></td>
+                <td><code>12 seconds</code></td>
+                <td>Request timeout (configured in backend)</td>
+            </tr>
+            <tr>
+                <td><strong>Retries</strong></td>
+                <td><code>3 attempts</code></td>
+                <td>Automatic retry on network failures</td>
+            </tr>
+        </table>
+
+        <h2 id="user-apis">👤 4. User Management APIs</h2>
+
+        <h3>🔐 Login</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/login/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/login/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "aroma_account": "user@example.com",
+    "password": "password123"
+  }'</pre>
+        </div>
+
+        <h3>👤 Get Profile</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/profile/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/profile/ \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <strong>Response:</strong>
+            <pre>{
+    "id": "164acf99cb0ec046ddab36a9c6b757bf",
+    "createDate": "2025-09-30 09:53:02",
+    "phone": "",
+    "username": "ayush",
+    "account": "ayush.swamy@innovatiview.com",
+    "password": "$2a$10$WBfcnK23nBao2ABKdyJYwuh0XLge3.v4tR0P0m.ERI5h4d8pOVeSu",
+    "email": "ayush.swamy@innovatiview.com",
+    "supplierId": null,
+    "groupId": null,
+    "brandId": null,
+    "storeId": null,
+    "deleted": 0,
+    "status": 1
+}</pre>
+        </div>
+
+        <h3>✏️ Update Profile</h3>
+        <div class="endpoint">
+            <span class="method patch">PATCH</span> <strong>/api/v1/profile/</strong>
+            <pre>curl -X PATCH http://localhost:8000/api/v1/profile/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "username": "new_username",
+    "phone": "+9876543210"
+  }'</pre>
+        </div>
+
+        <h3>📧 Send Email Verification Code</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/email-code/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/email-code/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "type": 1
+  }'</pre>
+            <p><strong>Type values:</strong> 0 = Registration, 1 = Password Reset</p>
+        </div>
+
+        <h3>📱 Send SMS Code</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sms-code/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sms-code/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "phone": "+1234567890",
+    "phoneMute": "US",
+    "type": 0
+  }'</pre>
+        </div>
+
+        <h3>📝 Register New User</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/register/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/register/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "newuser@example.com",
+    "password": "securepassword",
+    "phone": "+1234567890",
+    "username": "newuser",
+    "validCode": "123456"
+  }'</pre>
+        </div>
+
+        <h3>🔄 Reset Password</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/reset-password/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/reset-password/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "newpassword",
+    "phone": "+1234567890",
+    "username": "username",
+    "validCode": "123456"
+  }'</pre>
+        </div>
+
+        <h2 id="device-apis">📱 5. Device Management APIs</h2>
+
+        <h3>📋 List Devices</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/device/list/</strong>
+            <pre>curl -X GET "http://localhost:8000/api/v1/device/list/?page=1&pageSize=10" \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <strong>Response:</strong>
+            <pre>{
+    "records": [
+        {
+            "supplier": null,
+            "group": null,
+            "brand": null,
+            "store": null,
+            "deviceType": null,
+            "deviceGroup": null,
+            "customer": null,
+            "subCustomer": null,
+            "latestSelfTelemetry": null,
+            "id": "df013b923db41bc7a96589e093cfdd35",
+            "createDate": "2025-09-22 18:09:34",
+            "onlineTime": 1759417007736,
+            "offlineTime": 1759330114041,
+            "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+            "oilName": "",
+            "customerId": "f462c7b86b57b4607d21ebd14920cbd4",
+            "subCustomerId": null,
+            "supplierId": null,
+            "groupId": null,
+            "brandId": null,
+            "storeId": null,
+            "iccid": null,
+            "iccidExtInfo": null,
+            "iccidExpireTime": null,
+            "binVersion": "BLEWIFI-SX-XXJ-1.0.3",
+            "remainInfoTotal": 4000,
+            "remainInfoCurrent": 3160,
+            "remainInfoDay": 8,
+            "deviceGroupId": null,
+            "deviceSubGroupId": null,
+            "sn": "d427879e3b00",
+            "iotId": "1905933587933364226",
+            "iotProjectId": "1702626270433988612",
+            "iotBesideMqttAddr": "8.138.115.86:1883",
+            "iotBesideMqttClientId": "XXIOT_1702626270433988612_#(RandomId)",
+            "iotBesideMqttPassword": "XXIOT_1702626270433988612",
+            "iotBesideMqttTopic": "XXIOT/1702626270433988612/d/+/telemetry",
+            "iotBesideMqttUsername": "XXIOT",
+            "iotBesideWsAddr": "ws://8.138.115.86:8083/mqtt",
+            "iotBesideWssAddr": "wss://8.138.115.86:8084/mqtt",
+            "status": "ONLINE",
+            "name": "here is updated Name",
+            "imageUrl": "",
+            "subDeviceTypeId": null,
+            "peerHost": "122.162.144.16",
+            "province": "unknown",
+            "city": "unknown",
+            "address": "印度德里West",
+            "lat": "28.511333",
+            "lng": "77.16705",
+            "peerProvince": "印度",
+            "peerCity": "印度",
+            "note": null,
+            "deleted": 0,
+            "showLocation": 1
+        }
+    ],
+    "total": 1,
+    "size": 10,
+    "current": 1,
+    "orders": [],
+    "optimizeCountSql": true,
+    "searchCount": true,
+    "countId": null,
+    "maxLimit": null,
+    "pages": 1
+}</pre>
+        </div>
+
+        <h3>➕ Create Device</h3>
+        
+        <h4>Option 1: Full Device Creation (Recommended for Production)</h4>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/save/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/save/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "address": "123 Main Street, Building A",
+    "city": "New Delhi",
+    "deviceName": "Living Room Aroma Diffuser",
+    "deviceSN": "AR123456789",
+    "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+    "lat": "28.511333",
+    "lng": "77.16705",
+    "province": "Delhi"
+  }'</pre>
+            <p><strong>Required Fields:</strong></p>
+            <ul>
+                <li><code>address</code> - Full street address (required)</li>
+                <li><code>city</code> - City name (required)</li>
+                <li><code>deviceName</code> - Display name for the device (required)</li>
+                <li><code>deviceSN</code> - Device serial number (required, must be pre-registered)</li>
+                <li><code>deviceTypeId</code> - Device type identifier (required)</li>
+                <li><code>lat</code> - Latitude coordinate as string (required)</li>
+                <li><code>lng</code> - Longitude coordinate as string (required)</li>
+                <li><code>province</code> - Province/state name (required)</li>
+            </ul>
+            <div class="warning">
+                <strong>⚠️ Important:</strong> All fields are required. Device serial numbers must be pre-registered with the external API.
+            </div>
+            <strong>Success Response:</strong>
+            <pre>{
+  "id": "df013b923db41bc7a96589e093cfdd35",
+  "deviceName": "Living Room Aroma Diffuser",
+  "deviceSN": "AR123456789",
+  "status": "ONLINE",
+  "createDate": "2025-10-02 15:30:00"
+}</pre>
+            <strong>Error Response (Unregistered SN):</strong>
+            <pre>{
+  "detail": "[code=500] 该设备SN码未经过本公司认证"
+}</pre>
+        </div>
+
+        <h4>Option 2: Flexible Device Creation (Development/Testing)</h4>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/create/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/create/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "sn": "AR123456789",
+    "name": "Test Device",
+    "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+    "address": "123 Test Street",
+    "city": "Test City",
+    "province": "Test Province",
+    "lat": "28.511333",
+    "lng": "77.16705"
+  }'</pre>
+            <p><strong>Required Fields:</strong></p>
+            <ul>
+                <li><code>sn</code> - Device serial number (required, must be pre-registered)</li>
+            </ul>
+            <p><strong>Optional Fields:</strong></p>
+            <ul>
+                <li><code>name</code> - Device display name (defaults to "Device {sn}")</li>
+                <li><code>deviceTypeId</code> - Device type identifier (defaults to standard type)</li>
+                <li><code>address</code> - Full street address (defaults to "Default Address")</li>
+                <li><code>city</code> - City name (defaults to "Default City")</li>
+                <li><code>province</code> - Province/state name (defaults to "Default Province")</li>
+                <li><code>lat</code> - Latitude coordinate (defaults to Delhi coordinates)</li>
+                <li><code>lng</code> - Longitude coordinate (defaults to Delhi coordinates)</li>
+            </ul>
+            <div class="info">
+                <strong>💡 Note:</strong> This endpoint provides default values for missing location fields, making it easier for development and testing.
+            </div>
+        </div>
+
+        <h3>🔍 Get Device Details</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/device/detail/</strong>
+            <pre>curl -X GET "http://localhost:8000/api/v1/device/detail/?id=device123" \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+        </div>
+
+        <h3>✏️ Update Device</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/update/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/update/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "df013b923db41bc7a96589e093cfdd35",
+    "name": "Jaipur Office Diffuser",
+    "oilName": "Rose Essential Oil"
+  }'</pre>
+            <p><strong>⚠️ Important:</strong> Only <code>deviceName</code> and <code>oilName</code> are supported by the external API.</p>
+            <p><strong>Supported Fields:</strong></p>
+            <ul>
+                <li><code>id</code> - Device ID (required)</li>
+                <li><code>name</code> - Device display name (maps to deviceName)</li>
+                <li><code>oilName</code> - Current oil/fragrance name (requires name to be present)</li>
+            </ul>
+            <p><strong>Field Requirements:</strong></p>
+            <ul>
+                <li><code>name</code> can be updated independently</li>
+                <li><code>oilName</code> requires <code>name</code> to be present in the same request</li>
+                <li>Location fields (address, city, province, lat, lng) cannot be updated after device creation</li>
+            </ul>
+            <p><strong>Success Response:</strong></p>
+            <pre>{}</pre>
+            <p><strong>Error Response:</strong></p>
+            <pre>{
+  "detail": "[code=500] 参数JSON解析错误"
+}</pre>
+            <p><strong>Example - Update Device Name Only:</strong></p>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/update/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "df013b923db41bc7a96589e093cfdd35",
+    "name": "Mumbai Office Diffuser"
+  }'</pre>
+            <p><strong>Example - Update Oil Name:</strong></p>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/update/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "df013b923db41bc7a96589e093cfdd35",
+    "name": "Jaipur Office Diffuser",
+    "oilName": "Jasmine Essential Oil"
+  }'</pre>
+        </div>
+
+        <h3>🎮 Control Device</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/control/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/control/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "device123",
+    "frame": "AA5500FF"
+  }'</pre>
+            <p><strong>Frame Format:</strong> Hex string representing device command (e.g., AA5500FF for power on)</p>
+        </div>
+
+        <h3>🎮 Batch Control</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/control-batch/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/control-batch/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "payload": [
+      {"deviceId": "device1", "frame": "AA5500FF"},
+      {"deviceId": "device2", "frame": "AA5501FF"}
+    ]
+  }'</pre>
+        </div>
+
+        <h3>🗑️ Delete Device</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/delete/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/delete/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "device123"
+  }'</pre>
+        </div>
+
+        <h3>🤝 Share Device</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device/share/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device/share/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "deviceId": "device123",
+    "targetAccount": "friend@example.com"
+  }'</pre>
+        </div>
+
+        <h2 id="device-group-apis">📂 6. Device Group APIs</h2>
+
+        <h3>➕ Create Device Group</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device-group/create/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/create/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "name": "Living Room Devices",
+    "description": "All devices in living room",
+    "parentGroupId": "",
+    "deviceIds": ["device1", "device2"]
+  }'</pre>
+            <div class="info">
+                <strong>💡 Note:</strong> This endpoint internally uses the working <code>subGroup/updateOrSave</code> API to ensure device group creation works properly.
+            </div>
+        </div>
+
+        <h3>📋 List Device Groups</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/device-group/list/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/device-group/list/ \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+        </div>
+
+        <h3>🔍 Get Group Details</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/device-group/detail/</strong>
+            <pre>curl -X GET "http://localhost:8000/api/v1/device-group/detail/?id=group123" \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+        </div>
+
+        <h3>✏️ Create/Update Sub-Group (Location Group)</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device-group/sub-upsert/</strong>
+            <p><strong>Purpose:</strong> Create new sub-groups or update existing ones. This endpoint handles both creation and updates based on whether you provide an <code>id</code>.</p>
+            
+            <h4>🆕 Create New Sub-Group</h4>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/sub-upsert/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "name": "10th floor devices",
+    "parentGroupId": "0",
+    "deviceIds": ["df013b923db41bc7a96589e093cfdd35"],
+    "clean": false,
+    "id": null
+  }'</pre>
+            
+            <h4>🔄 Update Existing Sub-Group</h4>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/sub-upsert/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "name": "Updated 10th floor devices",
+    "parentGroupId": "0",
+    "deviceIds": ["df013b923db41bc7a96589e093cfdd35"],
+    "clean": false,
+    "id": "f3c8254c20596faf5a4aa60b91234213"
+  }'</pre>
+            
+            <h4>📱 Update Device Assignments</h4>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/sub-upsert/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "name": "10th floor devices",
+    "parentGroupId": "0",
+    "deviceIds": ["device1", "device2", "device3"],
+    "clean": true,
+    "id": "f3c8254c20596faf5a4aa60b91234213"
+  }'</pre>
+            
+            <h4>🗑️ Remove All Devices from Group</h4>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/sub-upsert/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "name": "10th floor devices",
+    "parentGroupId": "0",
+    "deviceIds": [],
+    "clean": true,
+    "id": "f3c8254c20596faf5a4aa60b91234213"
+  }'</pre>
+            
+            <div class="info">
+                <strong>📋 Field Descriptions:</strong>
+                <ul>
+                    <li><code>name</code> - Group name (will be stored and displayed dynamically)</li>
+                    <li><code>parentGroupId</code> - Parent group ID (usually "0" for main groups)</li>
+                    <li><code>deviceIds</code> - Array of device IDs to assign to this group</li>
+                    <li><code>clean</code> - If true, replaces all existing devices; if false, adds to existing</li>
+                    <li><code>id</code> - Group ID (null for create, existing ID for update)</li>
+                </ul>
+            </div>
+            
+            <strong>Success Response:</strong>
+            <pre>{
+  "id": "f3c8254c20596faf5a4aa60b91234213",
+  "createDate": "2025-10-03 21:53:24",
+  "customerId": "f462c7b86b57b4607d21ebd14920cbd4",
+  "subCustomerId": null,
+  "parentGroupId": "0",
+  "name": "Updated 10th floor devices",
+  "deleted": 0
+}</pre>
+        </div>
+
+        <h3>🗑️ Delete Device Group</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device-group/delete/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/delete/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "group123"
+  }'</pre>
+            <p><strong>Purpose:</strong> Deletes main device groups</p>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+        </div>
+
+        <h3>🗑️ Delete Sub-Group (Location Group)</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/device-group/sub-delete/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/device-group/sub-delete/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "sub_group_id"
+  }'</pre>
+            <p><strong>Purpose:</strong> Deletes sub-groups (location groups) - <strong>Perfect for location-based management!</strong></p>
+            <div class="info">
+                <strong>💡 Use Case:</strong> When you want to remove a location group (like "8th Floor Devices") from your dashboard, use this endpoint.
+            </div>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+        </div>
+
+        <h3>🌟 List All Groups with Devices (Comprehensive)</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/device-group/list-all/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/device-group/list-all/ \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <div class="info">
+                <strong>💡 Perfect for Location-Based Grouping:</strong> This endpoint extracts all device groups from device data and provides comprehensive group information with device details. Ideal for creating location-based dashboards like the one in your image.
+            </div>
+            <div class="info">
+                <strong>🏷️ Dynamic Group Names:</strong> Group names are automatically stored and retrieved dynamically. When you create a group with a custom name (like "10th floor devices"), it will be displayed exactly as you named it, not as a placeholder like "Location Group {id}".
+            </div>
+            <strong>Success Response:</strong>
+            <pre>{
+  "groups": [
+    {
+      "id": "0",
+      "name": "Main Group 0",
+      "type": "main",
+      "device_count": 1,
+      "devices": [
+        {
+          "id": "df013b923db41bc7a96589e093cfdd35",
+          "name": "fragrance",
+          "status": "ONLINE",
+          "oilName": "Rose Essential Oil",
+          "address": "unknown",
+          "city": "unknown",
+          "province": "unknown",
+          "lat": "28.511333",
+          "lng": "77.16705"
+        }
+      ]
+    },
+    {
+      "id": "f3c8254c20596faf5a4aa60b91234213",
+      "name": "10th floor devices",
+      "type": "sub",
+      "device_count": 1,
+      "devices": [
+        {
+          "id": "df013b923db41bc7a96589e093cfdd35",
+          "name": "Living Room Diffuser",
+          "status": "ONLINE",
+          "oilName": "",
+          "address": "123 Main Street, Building A",
+          "city": "New Delhi",
+          "province": "Delhi",
+          "lat": "28.511333",
+          "lng": "77.16705"
+        }
+      ]
+    }
+  ],
+  "total_groups": 2,
+  "main_groups": 1,
+  "sub_groups": 1,
+  "devices_by_group": {
+    "main": {...},
+    "sub": {...}
+  }
+}</pre>
+            <p><strong>Key Features:</strong></p>
+            <ul>
+                <li><code>groups</code> - Array of all groups (main + sub-groups)</li>
+                <li><code>type</code> - "main" or "sub" to distinguish group types</li>
+                <li><code>device_count</code> - Number of devices in each group</li>
+                <li><code>devices</code> - Full device details for each group</li>
+                <li><code>devices_by_group</code> - Organized by main/sub categories</li>
+            </ul>
+        </div>
+
+        <h3>📱 Get Devices in Specific Group</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/device-group/devices/</strong>
+            <pre>curl -X GET "http://localhost:8000/api/v1/device-group/devices/?group_id=de296ff649ed17576deed19d52a4c894" \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <strong>Success Response:</strong>
+            <pre>[
+  {
+    "id": "df013b923db41bc7a96589e093cfdd35",
+    "name": "fragrance",
+    "status": "ONLINE",
+    "oilName": "Rose Essential Oil",
+    "address": "unknown",
+    "city": "unknown",
+    "province": "unknown",
+    "lat": "28.511333",
+    "lng": "77.16705",
+    "deviceSN": "d427879e3b00",
+    "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+    "createDate": "2025-09-22 18:09:34",
+    "onlineTime": 1759487014741,
+    "offlineTime": 1759486225120
+  }
+]</pre>
+            <p><strong>Query Parameters:</strong></p>
+            <ul>
+                <li><code>group_id</code> - ID of the group to get devices for (required)</li>
+            </ul>
+        </div>
+
+        <h2 id="sub-account-apis">👥 7. Sub-Account APIs</h2>
+
+        <div class="info">
+            <strong>🎯 Sub-Account Management:</strong> Complete sub-account management system for creating and managing user hierarchies, device sharing, and access control.
+        </div>
+
+        <h3>➕ Create Sub-Account</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/create/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/create/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "account": "subuser@example.com",
+    "password": "subpass123",
+    "role": 0,
+    "note": "Test sub-account"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{}</pre>
+            <p><strong>Fields:</strong></p>
+            <ul>
+                <li><code>account</code> - Email/username for sub-account (required)</li>
+                <li><code>password</code> - Password for sub-account (required)</li>
+                <li><code>role</code> - Role level: 0=normal(default: 0)</li>
+                <li><code>note</code> - Optional description/note</li>
+            </ul>
+        </div>
+
+        <h3>📋 List Sub-Accounts</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/sub/list/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/sub/list/ \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <strong>Success Response:</strong>
+            <pre>{
+  [
+    {
+        "customer": null,
+        "id": "c7c32d3ea92f203b70e2f6611e9eb858",
+        "createDate": "2025-10-02 14:57:55",
+        "customerId": "f462c7b86b57b4607d21ebd14920cbd4",
+        "account": "hiteshsharm7794@gamil.com",
+        "password": "subpass123",
+        "note": "Test sub-account",
+        "deleted": 0,
+        "status": 1,
+        "role": 0
+    },
+    {
+        "customer": null,
+        "id": "cde85441242d5a33455215dcbac07c11",
+        "createDate": "2025-10-02 12:17:16",
+        "customerId": "f462c7b86b57b4607d21ebd14920cbd4",
+        "account": "samrath.ahluwalia@innovatiview.com",
+        "password": "admin@123",
+        "note": "",
+        "deleted": 0,
+        "status": 1,
+        "role": 0
+    }
+]
+  "total": 1
+}</pre>
+        </div>
+
+        <h3>🔍 Get Sub-Account Detail</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/sub/detail/</strong>
+            <pre>curl -X GET "http://localhost:8000/api/v1/sub/detail/?id=sub_account_id_123" \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <strong>Success Response:</strong>
+            <pre>{
+  "id": "sub_account_id_123",
+  "account": "subuser@example.com",
+  "role": 0,
+  "note": "Test sub-account",
+  "status": 1,
+  "createDate": "2025-10-02 10:30:00",
+  "lastLoginDate": null,
+  "deviceCount": 2,
+  "groupCount": 1
+}</pre>
+        </div>
+
+        <h3>✏️ Update Sub-Account</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/update/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/update/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "sub_account_id_123",
+    "email": "updated@example.com",
+    "username": "updated_username",
+    "phone": "1234567890"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{
+  "id": "sub_account_id_123",
+  "account": "subuser@example.com",
+  "email": "updated@example.com",
+  "username": "updated_username",
+  "phone": "1234567890",
+  "role": 0,
+  "status": 1
+}</pre>
+        </div>
+
+        <h3>✅ Enable Sub-Account</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/enable/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/enable/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "sub_account_id_123"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+        </div>
+
+        <h3>❌ Disable Sub-Account</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/disable/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/disable/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "sub_account_id_123"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+        </div>
+
+        <h3>🗑️ Delete Sub-Account</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/delete/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/delete/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "sub_account_id_123"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+        </div>
+
+        <h3>📱 Get Shared Devices</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/sub/shared-devices/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/sub/shared-devices/ \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <p><strong>Optional Query Parameters:</strong></p>
+            <ul>
+                <li><code>sub_customer_id</code> - Filter devices shared with specific sub-account</li>
+            </ul>
+            <p><strong>Examples:</strong></p>
+            <pre># Get all shared devices
+curl -X GET http://localhost:8000/api/v1/sub/shared-devices/ \
+  -H "Aroma-Token: YOUR_TOKEN"
+
+# Get devices shared with specific sub-account
+curl -X GET "http://localhost:8000/api/v1/sub/shared-devices/?sub_customer_id=0d197f3d923bf07c1f2db4995ecdbead" \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <div class="info">
+                <strong>💡 Implementation Note:</strong> This endpoint uses the device list API with filtering since dedicated shared devices endpoints don't exist in the external API.
+            </div>
+            <strong>Success Response:</strong>
+            <pre>[
+  {
+    "id": "df013b923db41bc7a96589e093cfdd35",
+    "name": "Shared Device",
+    "status": "ONLINE",
+    "subCustomerId": "0d197f3d923bf07c1f2db4995ecdbead",
+    "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+    "oilName": "Rose Essential Oil",
+    "address": "123 Main Street",
+    "city": "New Delhi",
+    "province": "Delhi",
+    "lat": "28.511333",
+    "lng": "77.16705"
+  }
+]</pre>
+        </div>
+
+        <h3>📋 Get Available Devices</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/sub/available-devices/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/sub/available-devices/ \
+  -H "Aroma-Token: YOUR_TOKEN"</pre>
+            <div class="info">
+                <strong>💡 Implementation Note:</strong> This endpoint returns devices that are not currently shared with any sub-account (subCustomerId is null).
+            </div>
+            <strong>Success Response:</strong>
+            <pre>[
+  {
+    "id": "df013b923db41bc7a96589e093cfdd35",
+    "name": "Available Device",
+    "status": "ONLINE",
+    "subCustomerId": null,
+    "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+    "oilName": "Rose Essential Oil",
+    "address": "123 Main Street",
+    "city": "New Delhi",
+    "province": "Delhi",
+    "lat": "28.511333",
+    "lng": "77.16705"
+  }
+]</pre>
+        </div>
+
+        <h3>🤝 Share Device to Sub-Account</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/share-device/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/share-device/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "subId": "sub_account_id_123",
+    "deviceId": "device_456",
+    "rights": "CONTROL"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+            <p><strong>Rights Options:</strong></p>
+            <ul>
+                <li><code>"VIEW"</code> - Read-only access to device</li>
+                <li><code>"CONTROL"</code> - Full control access (default)</li>
+            </ul>
+        </div>
+
+        <h3>🚫 Cancel Share Device</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/sub/cancel-share-device/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/cancel-share-device/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "subId": "sub_account_id_123",
+    "deviceId": "device_456"
+  }'</pre>
+            <p><strong>Alternative (using share record ID):</strong></p>
+            <pre>curl -X POST http://localhost:8000/api/v1/sub/cancel-share-device/ \
+  -H "Content-Type: application/json" \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -d '{
+    "id": "share_record_id_789"
+  }'</pre>
+            <strong>Success Response:</strong>
+            <pre>{"ok": true}</pre>
+        </div>
+
+        <h2 id="file-apis">📁 8. File Upload APIs</h2>
+
+        <h3>📤 Upload File</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/file/upload/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/file/upload/ \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -F "file=@/path/to/your/image.jpg"</pre>
+            <strong>Response:</strong>
+            <pre>{
+  "url": "https://oss.example.com/uploaded-file.jpg",
+  "filename": "image.jpg"
+}</pre>
+        </div>
+
+        <h2 id="bulk-apis">📦 9. Bulk Device Upload APIs</h2>
+
+        <div class="info">
+            <strong>🎯 Bulk Device Management:</strong> Upload multiple devices at once using CSV files. The system processes each device using the same external API as single device creation, providing detailed success/failure reporting.
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> All device serial numbers (deviceSN) must be pre-registered with the external API. Unregistered serial numbers will result in "[code=500] 该设备SN码未经过本公司认证" errors.
+        </div>
+
+        <h3>📊 Get Bulk Upload Status</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/bulk/status/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/bulk/status/</pre>
+            <strong>Response:</strong>
+            <pre>{
+  "bulk_upload_enabled": true,
+  "max_file_size_mb": 10,
+  "supported_formats": ["csv"],
+  "required_fields": [
+    "deviceName", "deviceSN", "deviceTypeId",
+    "address", "city", "province", "lat", "lng"
+  ],
+  "field_descriptions": {
+    "deviceName": "Display name for the device",
+    "deviceSN": "Device serial number (must be unique)",
+    "deviceTypeId": "Device type identifier",
+    "address": "Full street address",
+    "city": "City name",
+    "province": "Province/state name",
+    "lat": "Latitude coordinate (decimal format)",
+    "lng": "Longitude coordinate (decimal format)"
+  },
+  "sample_csv_url": "/api/v1/bulk/template/",
+  "validation_endpoint": "/api/v1/bulk/validate/",
+  "upload_endpoint": "/api/v1/bulk/upload/"
+}</pre>
+        </div>
+
+        <h3>📥 Download CSV Template</h3>
+        <div class="endpoint">
+            <span class="method get">GET</span> <strong>/api/v1/bulk/template/</strong>
+            <pre>curl -X GET http://localhost:8000/api/v1/bulk/template/ \
+  -o device_bulk_upload_template.csv</pre>
+            <p><strong>Downloads a CSV file with:</strong></p>
+            <ul>
+                <li>All required column headers</li>
+                <li>Sample data for 3 devices</li>
+                <li>Proper formatting examples</li>
+                <li>Real coordinates for major Indian cities</li>
+            </ul>
+            <div class="success">
+                <strong>💡 Pro Tip:</strong> Always use this template as your starting point to ensure correct field names and formatting.
+            </div>
+        </div>
+
+        <h3>✅ Validate CSV Format</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/bulk/validate/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/bulk/validate/ \
+  -F "csv_file=@devices.csv"</pre>
+            <strong>Success Response:</strong>
+            <pre>{
+  "valid": true,
+  "total_rows": 25,
+  "errors": [],
+  "warnings": []
+}</pre>
+            <strong>Validation Error Response:</strong>
+            <pre>{
+  "valid": false,
+  "total_rows": 25,
+  "errors": [
+    "Row 3: Missing required fields: lat, lng",
+    "Row 7: Invalid coordinate format for lat/lng",
+    "Row 12: Missing required fields: deviceSN"
+  ],
+  "warnings": []
+}</pre>
+            <div class="warning">
+                <strong>⚠️ Recommended:</strong> Always validate your CSV before uploading to catch formatting issues early.
+            </div>
+        </div>
+
+        <h3>🚀 Bulk Upload Devices</h3>
+        <div class="endpoint">
+            <span class="method post">POST</span> <strong>/api/v1/bulk/upload/</strong>
+            <pre>curl -X POST http://localhost:8000/api/v1/bulk/upload/ \
+  -H "Aroma-Token: YOUR_TOKEN" \
+  -F "csv_file=@devices.csv"</pre>
+            <strong>Success Response (All devices created):</strong>
+            <pre>{
+  "total": 25,
+  "successful": 25,
+  "failed": 0,
+  "results": [
+    {
+      "row": 2,
+      "status": "success",
+      "device_data": {
+        "deviceName": "Living Room Diffuser",
+        "deviceSN": "AR123456789",
+        "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+        "address": "123 Main Street, Building A",
+        "city": "New Delhi",
+        "province": "Delhi",
+        "lat": "28.511333",
+        "lng": "77.16705"
+      },
+      "response": {
+        "id": "df013b923db41bc7a96589e093cfdd35",
+        "status": "ONLINE"
+      }
+    }
+  ],
+  "errors": []
+}</pre>
+            <strong>Partial Success Response (Some devices failed):</strong>
+            <pre>{
+  "total": 25,
+  "successful": 22,
+  "failed": 3,
+  "results": [...],
+  "errors": [
+    {
+      "row": 5,
+      "status": "failed",
+      "device_data": {...},
+      "error": "Device with serial number AR123456789 already exists"
+    },
+    {
+      "row": 12,
+      "status": "failed", 
+      "device_data": {...},
+      "error": "Invalid device type ID"
+    }
+  ]
+}</pre>
+            <p><strong>HTTP Status Codes:</strong></p>
+            <ul>
+                <li><code>200</code> - All devices created successfully</li>
+                <li><code>207</code> - Partial success (some devices failed)</li>
+                <li><code>400</code> - Validation error or all devices failed</li>
+                <li><code>401</code> - Missing or invalid Aroma-Token</li>
+            </ul>
+        </div>
+
+        <h3>📋 CSV Format Requirements</h3>
+        <div class="endpoint">
+            <strong>Required CSV Structure:</strong>
+            <pre>deviceName,deviceSN,deviceTypeId,address,city,province,lat,lng
+Living Room Diffuser,AR123456789,037164fe160203b9a5e665612b2e7d1b,"123 Main Street, Building A",New Delhi,Delhi,28.511333,77.16705
+Bedroom Diffuser,AR987654321,037164fe160203b9a5e665612b2e7d1b,"456 Oak Avenue, Suite 200",Mumbai,Maharashtra,19.076090,72.877426</pre>
+            
+            <p><strong>Important Notes:</strong></p>
+            <ul>
+                <li>✅ <strong>Header row required:</strong> First row must contain exact field names</li>
+                <li>✅ <strong>UTF-8 encoding:</strong> File must be saved as UTF-8</li>
+                <li>✅ <strong>Unique serial numbers:</strong> Each deviceSN must be unique</li>
+                <li>✅ <strong>Decimal coordinates:</strong> lat/lng as decimal numbers (not DMS)</li>
+                <li>✅ <strong>Quoted addresses:</strong> Use quotes for addresses with commas</li>
+                <li>✅ <strong>File size limit:</strong> Maximum 10MB per upload</li>
+                <li>❌ <strong>No empty rows:</strong> Skip or remove empty rows</li>
+                <li>❌ <strong>No extra columns:</strong> Only include required fields</li>
+            </ul>
+        </div>
+
+        <h3>⚠️ Missing Fields Handling</h3>
+        <div class="endpoint">
+            <strong>What happens when users don't fill required fields:</strong>
+            
+            <p><strong>Example CSV with Missing Fields:</strong></p>
+            <pre>deviceName,deviceSN,deviceTypeId,address,city,province,lat,lng
+Complete Device,AR111111111,037164fe160203b9a5e665612b2e7d1b,"123 Complete Street",Delhi,Delhi,28.511333,77.16705
+Missing Serial,,037164fe160203b9a5e665612b2e7d1b,"456 Oak Avenue",Mumbai,Maharashtra,19.076090,72.877426
+Missing DeviceType,AR222222222,,"789 Business Park",Bangalore,Karnataka,12.971599,77.594566
+Missing Address,AR333333333,037164fe160203b9a5e665612b2e7d1b,,Chennai,Tamil Nadu,13.082680,80.270721
+Missing Coordinates,AR444444444,037164fe160203b9a5e665612b2e7d1b,"101 Test Street",Pune,Maharashtra,,</pre>
+
+            <p><strong>Validation Response (before upload):</strong></p>
+            <pre>{
+  "valid": false,
+  "total_rows": 5,
+  "errors": [
+    "Row 3: Missing required fields: deviceSN",
+    "Row 4: Missing required fields: deviceTypeId", 
+    "Row 5: Missing required fields: address",
+    "Row 6: Missing required fields: lat, lng"
+  ],
+  "warnings": []
+}</pre>
+
+            <p><strong>Bulk Upload Response (partial success):</strong></p>
+            <pre>{
+  "total": 5,
+  "successful": 1,
+  "failed": 4,
+  "results": [
+    {
+      "row": 2,
+      "status": "success",
+      "device_data": {
+        "deviceName": "Complete Device",
+        "deviceSN": "AR111111111",
+        "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+        "address": "123 Complete Street",
+        "city": "Delhi",
+        "province": "Delhi",
+        "lat": "28.511333",
+        "lng": "77.16705"
+      },
+      "response": {
+        "id": "df013b923db41bc7a96589e093cfdd35",
+        "status": "ONLINE"
+      }
+    }
+  ],
+  "errors": [
+    {
+      "row": 3,
+      "status": "failed",
+      "device_data": {
+        "deviceName": "Missing Serial",
+        "deviceSN": "",
+        "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+        "address": "456 Oak Avenue",
+        "city": "Mumbai",
+        "province": "Maharashtra",
+        "lat": "19.076090",
+        "lng": "72.877426"
+      },
+      "error": "Row 3: Missing required fields: deviceSN"
+    },
+    {
+      "row": 4,
+      "status": "failed",
+      "device_data": {
+        "deviceName": "Missing DeviceType",
+        "deviceSN": "AR222222222",
+        "deviceTypeId": "",
+        "address": "789 Business Park",
+        "city": "Bangalore",
+        "province": "Karnataka",
+        "lat": "12.971599",
+        "lng": "77.594566"
+      },
+      "error": "Row 4: Missing required fields: deviceTypeId"
+    },
+    {
+      "row": 5,
+      "status": "failed",
+      "device_data": {
+        "deviceName": "Missing Address",
+        "deviceSN": "AR333333333",
+        "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+        "address": "",
+        "city": "Chennai",
+        "province": "Tamil Nadu",
+        "lat": "13.082680",
+        "lng": "80.270721"
+      },
+      "error": "Row 5: Missing required fields: address"
+    },
+    {
+      "row": 6,
+      "status": "failed",
+      "device_data": {
+        "deviceName": "Missing Coordinates",
+        "deviceSN": "AR444444444",
+        "deviceTypeId": "037164fe160203b9a5e665612b2e7d1b",
+        "address": "101 Test Street",
+        "city": "Pune",
+        "province": "Maharashtra",
+        "lat": "",
+        "lng": ""
+      },
+      "error": "Row 6: Missing required fields: lat, lng"
+    }
+  ]
+}</pre>
+
+            <div class="warning">
+                <strong>⚠️ Key Behaviors:</strong>
+                <ul>
+                    <li><strong>Row-by-row validation:</strong> Each row is validated independently</li>
+                    <li><strong>Partial processing:</strong> Valid rows are processed, invalid rows are skipped</li>
+                    <li><strong>Detailed error reporting:</strong> Exact row numbers and missing fields are reported</li>
+                    <li><strong>No data corruption:</strong> Invalid rows don't affect valid device creation</li>
+                    <li><strong>HTTP 207 status:</strong> Partial success returns Multi-Status code</li>
+                </ul>
+            </div>
+
+            <div class="error">
+                <strong>❌ Common Missing Field Errors:</strong>
+                <ul>
+                    <li><code>deviceSN</code> - "Missing required fields: deviceSN"</li>
+                    <li><code>deviceTypeId</code> - "Missing required fields: deviceTypeId"</li>
+                    <li><code>lat, lng</code> - "Missing required fields: lat, lng"</li>
+                    <li><code>address</code> - "Missing required fields: address"</li>
+                    <li><strong>Multiple fields:</strong> "Missing required fields: deviceSN, address, lat"</li>
+                </ul>
+            </div>
+
+            <div class="success">
+                <strong>✅ Best Practices:</strong>
+                <ul>
+                    <li><strong>Always validate first:</strong> Use <code>/api/v1/bulk/validate/</code> before upload</li>
+                    <li><strong>Download template:</strong> Use <code>/api/v1/bulk/template/</code> for correct format</li>
+                    <li><strong>Check coordinates:</strong> Ensure lat/lng are decimal numbers, not empty</li>
+                    <li><strong>Unique serial numbers:</strong> Each deviceSN must be unique across all rows</li>
+                    <li><strong>Handle partial success:</strong> Process successful devices, fix failed ones</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2 id="error-handling">🚨 10. Error Handling</h2>
+
+        <h3>📊 Standard Error Format</h3>
+        <p>All errors follow this consistent format:</p>
+        <pre>{
+  "detail": "[code=ERROR_CODE] Error message description"
+}</pre>
+
+        <h3>🔢 Common Error Codes</h3>
+        <table>
+            <tr>
+                <th>Error Code</th>
+                <th>Description</th>
+                <th>Common Causes</th>
+            </tr>
+            <tr>
+                <td><code>500</code></td>
+                <td>Server Error</td>
+                <td>Invalid credentials, missing parameters, device offline</td>
+            </tr>
+            <tr>
+                <td><code>404</code></td>
+                <td>Not Found</td>
+                <td>Endpoint not available, resource doesn't exist</td>
+            </tr>
+            <tr>
+                <td><code>400</code></td>
+                <td>Bad Request</td>
+                <td>Invalid JSON, missing required fields</td>
+            </tr>
+            <tr>
+                <td><code>401</code></td>
+                <td>Unauthorized</td>
+                <td>Invalid or missing token</td>
+            </tr>
+        </table>
+
+        <h3>🔧 Error Handling Best Practices</h3>
+        <div class="error">
+            <strong>Frontend Error Handling Example:</strong>
+            <pre>try {
+  const response = await fetch('/api/v1/device/list/', {
+    headers: {
+      'Aroma-Token': 'your_token_here'
+    }
+  });
+  
+  if (!response.ok) {
+    const error = await response.json();
+    console.error('API Error:', error.detail);
+    // Handle specific error codes
+    if (error.detail.includes('[code=500]')) {
+      // Handle server errors
+    }
+    return;
+  }
+  
+  const data = await response.json();
+  // Handle successful response
+} catch (error) {
+  console.error('Network Error:', error);
+}</pre>
+        </div>
+
+        <h2 id="examples">💡 10. Complete Examples</h2>
+
+        <h3>🏢 Location-Based Dashboard Implementation (For Samrath)</h3>
+        <div class="endpoint">
+            <p><strong>Perfect for creating the dashboard shown in your image!</strong> This example shows how to group devices by location and display them in location blocks with full CRUD operations.</p>
+            
+            <pre>// Complete Location-Based Dashboard Implementation
+class LocationDashboard {
+  constructor(api) {
+    this.api = api;
+  }
+
+  async renderDashboard() {
+    try {
+      // Get all location groups (sub-groups)
+      const locationGroups = await this.api.getLocationGroups();
+      
+      // Create dashboard HTML
+      const dashboardHTML = this.createDashboardHTML(locationGroups);
+      
+      // Render to DOM
+      document.getElementById('dashboard').innerHTML = dashboardHTML;
+      
+      // Add event listeners
+      this.addEventListeners();
+      
+    } catch (error) {
+      console.error('Dashboard render failed:', error);
+    }
+  }
+
+  createDashboardHTML(locationGroups) {
+    let html = '<div class="dashboard">';
+    html += '<h1>Devices & Locations</h1>';
+    
+    locationGroups.forEach(group => {
+      html += this.createLocationBlock(group);
+    });
+    
+    html += '</div>';
+    return html;
+  }
+
+  createLocationBlock(group) {
+    // group.name will contain the actual custom name (e.g., "10th floor devices")
+    // thanks to the dynamic group naming system
+    let html = `<div class="location-block" data-group-id="${group.id}">`;
+    html += '<div class="location-header">';
+    html += `<h2>📍 ${group.name}</h2>`;  // Shows actual group name!
+    html += '<div class="location-actions">';
+    html += `<span class="device-count">${group.device_count} devices</span>`;
+    html += '<button class="edit-group-btn" title="Edit Group Name">✏️</button>';
+    html += '<button class="delete-group-btn" title="Delete Location Group">🗑️</button>';
+    html += '</div></div>';
+    html += '<div class="devices-grid">';
+    
+    group.devices.forEach(device => {
+      html += this.createDeviceCard(device);
+    });
+    
+    html += '</div></div>';
+    return html;
+  }
+
+  createDeviceCard(device) {
+    const statusClass = device.status === 'ONLINE' ? 'online' : 'offline';
+    const fuelLevel = Math.random() * 100; // Mock fuel level
+    
+    return `
+      <div class="device-card">
+        <div class="device-icon">💧</div>
+        <h3>${device.name}</h3>
+        <p class="device-id">ID: ${device.id}</p>
+        <span class="status ${statusClass}">${device.status}</span>
+        <div class="device-info">
+          <p>Fuel Rate: 10 mL/Hr</p>
+          <div class="fuel-level">
+            <div class="fuel-bar" style="width: ${fuelLevel}%"></div>
+            <span>${Math.round(fuelLevel)}%</span>
+          </div>
+        </div>
+        <div class="device-options">⋯</div>
+      </div>
+    `;
+  }
+
+  addEventListeners() {
+    // Add click handlers for device cards, options, etc.
+    document.querySelectorAll('.device-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        console.log('Device clicked:', e.target);
+        // Handle device interaction
+      });
+    });
+
+    // Add delete group functionality
+    document.querySelectorAll('.location-block').forEach(block => {
+      const deleteBtn = block.querySelector('.delete-group-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const groupId = block.dataset.groupId;
+          if (confirm('Are you sure you want to delete this location group?')) {
+            try {
+              await this.api.deleteSubGroup(groupId);
+              block.remove(); // Remove from UI
+              console.log('Group deleted successfully');
+            } catch (error) {
+              console.error('Failed to delete group:', error);
+              alert('Failed to delete group');
+            }
+          }
+        });
+      }
+    });
+
+    // Add edit group functionality
+    document.querySelectorAll('.location-block').forEach(block => {
+      const editBtn = block.querySelector('.edit-group-btn');
+      if (editBtn) {
+        editBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          const groupId = block.dataset.groupId;
+          const newName = prompt('Enter new group name:', block.querySelector('h2').textContent.replace('📍 ', ''));
+          if (newName && newName.trim()) {
+            try {
+              await this.api.updateDeviceGroup(groupId, newName.trim());
+              block.querySelector('h2').textContent = `📍 ${newName.trim()}`;
+              console.log('Group name updated successfully');
+            } catch (error) {
+              console.error('Failed to update group name:', error);
+              alert('Failed to update group name');
+            }
+          }
+        });
+      }
+    });
+  }
+}
+
+// Usage
+const api = new AromaTechAPI();
+const dashboard = new LocationDashboard(api);
+
+// Initialize dashboard
+dashboard.renderDashboard();</pre>
+            
+            <div class="info">
+                <strong>🎯 Key Features:</strong>
+                <ul>
+                    <li><strong>Location Grouping:</strong> Automatically groups devices by location using sub-groups</li>
+                    <li><strong>Real-time Data:</strong> Fetches current device status and information</li>
+                    <li><strong>Responsive Design:</strong> Creates device cards similar to your dashboard image</li>
+                    <li><strong>Interactive:</strong> Ready for click handlers and device control</li>
+                    <li><strong>Scalable:</strong> Works with any number of locations and devices</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>🌟 JavaScript/Fetch Example</h3>
+        <pre>class AromaTechAPI {
+  constructor(baseURL = 'http://localhost:8000/api/v1') {
+    this.baseURL = baseURL;
+    this.token = localStorage.getItem('aroma_token');
+  }
+
+  async login(aroma_account, password) {
+    const response = await fetch(`${this.baseURL}/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ aroma_account, password })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Login failed');
+    }
+
+    const data = await response.json();
+    this.token = data.token;
+    localStorage.setItem('aroma_token', this.token);
+    return data;
+  }
+
+  async getDevices(page = 1, pageSize = 10) {
+    const response = await fetch(
+      `${this.baseURL}/device/list/?page=${page}&pageSize=${pageSize}`,
+      {
+        headers: {
+          'Aroma-Token': this.token
+        }
+      }
+    );
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch devices');
+    }
+
+    return await response.json();
+  }
+
+  async controlDevice(deviceId, command) {
+    const response = await fetch(`${this.baseURL}/device/control/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({
+        id: deviceId,
+        frame: command
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Device control failed');
+    }
+
+    return await response.json();
+  }
+
+  async createDevice(deviceData) {
+    const response = await fetch(`${this.baseURL}/device/save/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify(deviceData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Device creation failed');
+    }
+
+    return await response.json();
+  }
+
+  async createDeviceFlexible(deviceData) {
+    const response = await fetch(`${this.baseURL}/device/create/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify(deviceData)
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Device creation failed');
+    }
+
+    return await response.json();
+  }
+
+  async updateDevice(deviceId, updateData) {
+    const response = await fetch(`${this.baseURL}/device/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({
+        id: deviceId,
+        ...updateData
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Device update failed');
+    }
+
+    return await response.json();
+  }
+
+  async createDeviceGroup(name, description = '', parentGroupId = '', deviceIds = []) {
+    const response = await fetch(`${this.baseURL}/device-group/create/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({
+        name,
+        description,
+        parentGroupId,
+        deviceIds
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Group creation failed');
+    }
+
+    return await response.json();
+  }
+
+  async getAllDeviceGroups() {
+    const response = await fetch(`${this.baseURL}/device-group/list-all/`, {
+      headers: { 'Aroma-Token': this.token }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch device groups');
+    }
+
+    return await response.json();
+  }
+
+  async getGroupDevices(groupId) {
+    const response = await fetch(`${this.baseURL}/device-group/devices/?group_id=${groupId}`, {
+      headers: { 'Aroma-Token': this.token }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch group devices');
+    }
+
+    return await response.json();
+  }
+
+  async getLocationGroups() {
+    // Helper method to get only sub-groups (location groups)
+    const allGroups = await this.getAllDeviceGroups();
+    return allGroups.groups.filter(group => group.type === 'sub');
+  }
+
+  async deleteDeviceGroup(groupId) {
+    const response = await fetch(`${this.baseURL}/device-group/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ id: groupId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Group deletion failed');
+    }
+
+    return await response.json();
+  }
+
+  async deleteSubGroup(subGroupId) {
+    const response = await fetch(`${this.baseURL}/device-group/sub-delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ id: subGroupId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Sub-group deletion failed');
+    }
+
+    return await response.json();
+  }
+
+  async updateDeviceGroup(groupId, name, parentGroupId = '0', deviceIds = [], clean = false) {
+    const response = await fetch(`${this.baseURL}/device-group/sub-upsert/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({
+        name,
+        parentGroupId,
+        deviceIds,
+        clean,
+        id: groupId
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Group update failed');
+    }
+
+    return await response.json();
+  }
+
+  async createSubGroup(name, parentGroupId = '0', deviceIds = []) {
+    const response = await fetch(`${this.baseURL}/device-group/sub-upsert/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({
+        name,
+        parentGroupId,
+        deviceIds,
+        clean: false,
+        id: null
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Sub-group creation failed');
+    }
+
+    return await response.json();
+  }
+
+  async assignDevicesToGroup(groupId, deviceIds, clean = true) {
+    // Get current group info first
+    const allGroups = await this.getAllDeviceGroups();
+    const group = allGroups.groups.find(g => g.id === groupId);
+    
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    return await this.updateDeviceGroup(groupId, group.name, '0', deviceIds, clean);
+  }
+
+  async removeAllDevicesFromGroup(groupId) {
+    // Get current group info first
+    const allGroups = await this.getAllDeviceGroups();
+    const group = allGroups.groups.find(g => g.id === groupId);
+    
+    if (!group) {
+      throw new Error('Group not found');
+    }
+
+    return await this.updateDeviceGroup(groupId, group.name, '0', [], true);
+  }
+
+  // Sub-Account Management Methods
+  async createSubAccount(account, password, role = 0, note = '') {
+    const response = await fetch(`${this.baseURL}/sub/create/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ account, password, role, note })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Sub-account creation failed');
+    }
+
+    return await response.json();
+  }
+
+  async getSubAccounts() {
+    const response = await fetch(`${this.baseURL}/sub/list/`, {
+      headers: { 'Aroma-Token': this.token }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch sub-accounts');
+    }
+
+    return await response.json();
+  }
+
+  async getSubAccountDetail(id) {
+    const response = await fetch(`${this.baseURL}/sub/detail/?id=${id}`, {
+      headers: { 'Aroma-Token': this.token }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch sub-account details');
+    }
+
+    return await response.json();
+  }
+
+  async updateSubAccount(id, updates) {
+    const response = await fetch(`${this.baseURL}/sub/update/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ id, ...updates })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Sub-account update failed');
+    }
+
+    return await response.json();
+  }
+
+  async enableSubAccount(id) {
+    const response = await fetch(`${this.baseURL}/sub/enable/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ id })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to enable sub-account');
+    }
+
+    return await response.json();
+  }
+
+  async disableSubAccount(id) {
+    const response = await fetch(`${this.baseURL}/sub/disable/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ id })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to disable sub-account');
+    }
+
+    return await response.json();
+  }
+
+  async deleteSubAccount(id) {
+    const response = await fetch(`${this.baseURL}/sub/delete/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ id })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to delete sub-account');
+    }
+
+    return await response.json();
+  }
+
+  async shareDeviceToSubAccount(subId, deviceId, rights = 'CONTROL') {
+    const response = await fetch(`${this.baseURL}/sub/share-device/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ subId, deviceId, rights })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Device sharing failed');
+    }
+
+    return await response.json();
+  }
+
+  async cancelShareDevice(subId, deviceId) {
+    const response = await fetch(`${this.baseURL}/sub/cancel-share-device/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Aroma-Token': this.token
+      },
+      body: JSON.stringify({ subId, deviceId })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Cancel device sharing failed');
+    }
+
+    return await response.json();
+  }
+
+  async getSharedDevices(subCustomerId = null) {
+    let url = `${this.baseURL}/sub/shared-devices/`;
+    if (subCustomerId) {
+      url += `?sub_customer_id=${subCustomerId}`;
+    }
+    
+    const response = await fetch(url, {
+      headers: { 'Aroma-Token': this.token }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch shared devices');
+    }
+
+    return await response.json();
+  }
+
+  async getAvailableDevices() {
+    const response = await fetch(`${this.baseURL}/sub/available-devices/`, {
+      headers: { 'Aroma-Token': this.token }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to fetch available devices');
+    }
+
+    return await response.json();
+  }
+
+  // Bulk Device Upload Methods
+  async getBulkUploadStatus() {
+    const response = await fetch(`${this.baseURL}/bulk/status/`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Failed to get bulk upload status');
+    }
+
+    return await response.json();
+  }
+
+  async downloadCSVTemplate() {
+    const response = await fetch(`${this.baseURL}/bulk/template/`);
+
+    if (!response.ok) {
+      throw new Error('Failed to download CSV template');
+    }
+
+    // Create download link
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'device_bulk_upload_template.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }
+
+  async validateCSV(csvFile) {
+    const formData = new FormData();
+    formData.append('csv_file', csvFile);
+
+    const response = await fetch(`${this.baseURL}/bulk/validate/`, {
+      method: 'POST',
+      body: formData
+    });
+
+    const result = await response.json();
+    
+    if (!response.ok && response.status !== 400) {
+      throw new Error(result.detail || 'CSV validation failed');
+    }
+
+    return result;
+  }
+
+  async bulkUploadDevices(csvFile) {
+    const formData = new FormData();
+    formData.append('csv_file', csvFile);
+
+    const response = await fetch(`${this.baseURL}/bulk/upload/`, {
+      method: 'POST',
+      headers: {
+        'Aroma-Token': this.token
+      },
+      body: formData
+    });
+
+    if (!response.ok && response.status !== 207) {
+      const error = await response.json();
+      throw new Error(error.detail || 'Bulk upload failed');
+    }
+
+    return await response.json();
+  }
+}
+
+// Usage Example
+const api = new AromaTechAPI();
+
+async function initializeApp() {
+  try {
+    // Login
+    await api.login('user@example.com', 'password123');
+    
+    // Get devices
+    const devices = await api.getDevices();
+    console.log('Devices:', devices);
+    
+    // Control a device
+    await api.controlDevice('device123', 'AA5500FF');
+    
+    // Create a new device (full method)
+    const newDevice = await api.createDevice({
+      address: "123 Main Street, Building A",
+      city: "New Delhi",
+      deviceName: "Living Room Aroma Diffuser",
+      deviceSN: "AR123456789",
+      deviceTypeId: "037164fe160203b9a5e665612b2e7d1b",
+      lat: "28.511333",
+      lng: "77.16705",
+      province: "Delhi"
+    });
+    console.log('Created device:', newDevice);
+    
+    // Create a device (flexible method with defaults)
+    const testDevice = await api.createDeviceFlexible({
+      sn: "AR999999999",
+      name: "Test Device",
+      address: "Test Address",
+      city: "Test City"
+    });
+    console.log('Created test device:', testDevice);
+    
+    // Update device name
+    await api.updateDevice('df013b923db41bc7a96589e093cfdd35', {
+      name: 'Updated Device Name'
+    });
+    console.log('Device name updated');
+    
+    // Update device oil name (requires name to be present)
+    await api.updateDevice('df013b923db41bc7a96589e093cfdd35', {
+      name: 'Jaipur Office Diffuser',
+      oilName: 'Rose Essential Oil'
+    });
+    console.log('Device oil updated');
+    
+    // Create device group
+    const group = await api.createDeviceGroup(
+      'My New Group',
+      'Group description',
+      '',
+      ['device1', 'device2']
+    );
+    console.log('Created group:', group);
+    
+    // Location-Based Dashboard Example (Perfect for Samrath's UI)
+    console.log('\\n=== Location-Based Dashboard Example ===');
+    
+    // Get all device groups (including location groups)
+    const allGroups = await api.getAllDeviceGroups();
+    console.log('All groups:', allGroups);
+    
+    // Get only location groups (sub-groups)
+    const locationGroups = await api.getLocationGroups();
+    console.log('Location groups:', locationGroups);
+    
+    // Display each location group like in the dashboard image
+    // Note: group.name will show the actual custom name (e.g., "10th floor devices")
+    // not a placeholder like "Location Group {id}"
+    locationGroups.forEach(group => {
+      console.log(`\\n📍 ${group.name}`);  // Shows actual group name!
+      console.log(`   Devices: ${group.device_count}`);
+      group.devices.forEach(device => {
+        console.log(`   - ${device.name} (${device.status})`);
+        console.log(`     Oil: ${device.oilName || 'None'}`);
+        console.log(`     Location: ${device.address}, ${device.city}`);
+      });
+    });
+    
+    // Get devices for a specific group
+    if (locationGroups.length > 0) {
+      const firstGroup = locationGroups[0];
+      const groupDevices = await api.getGroupDevices(firstGroup.id);
+      console.log(`\\nDevices in ${firstGroup.name}:`, groupDevices);
+    }
+    
+    // Group Management Examples
+    console.log('\\n=== Group Management Examples ===');
+    
+    // Create a test location group
+    const testGroup = await api.createSubGroup(
+      'Test Location Group',
+      '0',
+      ['df013b923db41bc7a96589e093cfdd35']
+    );
+    console.log('Created test group:', testGroup);
+    
+    // Update group name
+    if (testGroup.id) {
+      const updatedGroup = await api.updateDeviceGroup(
+        testGroup.id,
+        'Updated Test Location Group',
+        '0',
+        ['df013b923db41bc7a96589e093cfdd35'],
+        false
+      );
+      console.log('Updated group name:', updatedGroup);
+      
+      // Add more devices to the group
+      await api.assignDevicesToGroup(
+        testGroup.id,
+        ['df013b923db41bc7a96589e093cfdd35', 'another_device_id'],
+        true  // Replace all existing devices
+      );
+      console.log('Added devices to group');
+      
+      // Remove all devices from group
+      await api.removeAllDevicesFromGroup(testGroup.id);
+      console.log('Removed all devices from group');
+      
+      // Delete the test group
+      await api.deleteSubGroup(testGroup.id);
+      console.log('Deleted test group successfully');
+    }
+    
+    // Sub-Account Management Examples
+    
+    // Create a sub-account
+    const subAccount = await api.createSubAccount(
+      'subuser@example.com',
+      'subpass123',
+      0,
+      'Test sub-account'
+    );
+    console.log('Created sub-account:', subAccount);
+    
+    // Get all sub-accounts
+    const subAccounts = await api.getSubAccounts();
+    console.log('Sub-accounts:', subAccounts);
+    
+    // Share a device with sub-account
+    await api.shareDeviceToSubAccount(
+      subAccount.id,
+      'device123',
+      'CONTROL'
+    );
+    console.log('Device shared successfully');
+    
+    // Get all shared devices
+    const sharedDevices = await api.getSharedDevices();
+    console.log('All shared devices:', sharedDevices);
+    
+    // Get devices shared with specific sub-account
+    const subAccountDevices = await api.getSharedDevices(subAccount.id);
+    console.log('Devices shared with sub-account:', subAccountDevices);
+    
+    // Get available devices for sharing
+    const availableDevices = await api.getAvailableDevices();
+    console.log('Available devices:', availableDevices);
+    
+    // Update sub-account
+    await api.updateSubAccount(subAccount.id, {
+      username: 'updated_username',
+      phone: '1234567890'
+    });
+    console.log('Sub-account updated');
+    
+    // Disable sub-account
+    await api.disableSubAccount(subAccount.id);
+    console.log('Sub-account disabled');
+    
+    // Enable sub-account
+    await api.enableSubAccount(subAccount.id);
+    console.log('Sub-account enabled');
+    
+    // Bulk Device Upload Examples
+    
+    // Get bulk upload capabilities
+    const bulkStatus = await api.getBulkUploadStatus();
+    console.log('Bulk upload status:', bulkStatus);
+    
+    // Download CSV template
+    await api.downloadCSVTemplate();
+    console.log('CSV template downloaded');
+    
+    // Validate CSV file (assuming you have a file input)
+    const fileInput = document.getElementById('csvFile');
+    if (fileInput.files[0]) {
+      const validationResult = await api.validateCSV(fileInput.files[0]);
+      console.log('CSV validation:', validationResult);
+      
+      if (validationResult.valid) {
+        // Upload devices in bulk
+        const uploadResult = await api.bulkUploadDevices(fileInput.files[0]);
+        console.log('Bulk upload result:', uploadResult);
+        console.log(`Successfully created ${uploadResult.successful} devices`);
+        console.log(`Failed to create ${uploadResult.failed} devices`);
+      }
+    }
+    
+  } catch (error) {
+    console.error('Error:', error.message);
+  }
+}</pre>
+
+        <h3>🎯 React Hook Example</h3>
+        <pre>import { useState, useEffect } from 'react';
+
+const useAromaTech = () => {
+  const [token, setToken] = useState(localStorage.getItem('aroma_token'));
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const apiCall = async (endpoint, options = {}) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/v1${endpoint}`, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Aroma-Token': token }),
+          ...options.headers,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'API call failed');
+      }
+
+      return await response.json();
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (aroma_account, password) => {
+    const data = await apiCall('/login/', {
+      method: 'POST',
+      body: JSON.stringify({ aroma_account, password }),
+    });
+    
+    setToken(data.token);
+    localStorage.setItem('aroma_token', data.token);
+    return data;
+  };
+
+  const getDevices = (page = 1, pageSize = 10) => 
+    apiCall(`/device/list/?page=${page}&pageSize=${pageSize}`);
+
+  const controlDevice = (deviceId, frame) =>
+    apiCall('/device/control/', {
+      method: 'POST',
+      body: JSON.stringify({ id: deviceId, frame }),
+    });
+
+  return {
+    token,
+    loading,
+    error,
+    login,
+    getDevices,
+    controlDevice,
+    apiCall,
+  };
+};</pre>
+
+        <h2 id="troubleshooting">🔧 11. Troubleshooting</h2>
+
+        <h3>🚨 Common Issues & Solutions</h3>
+
+        <div class="error">
+            <strong>❌ Error: "Connection refused"</strong>
+            <p><strong>Solution:</strong> Make sure the Django development server is running:</p>
+            <pre>cd /path/to/aroma-tech
+source aroma-tech/bin/activate
+python manage.py runserver</pre>
+        </div>
+
+        <div class="error">
+            <strong>❌ Error: "[code=500] 用户不存在" (User does not exist)</strong>
+            <p><strong>Solutions:</strong></p>
+            <ul>
+                <li>Verify the email and password are correct</li>
+                <li>Check if the account exists on the external Aroma platform</li>
+                <li>Try logging into the Aroma platform directly first</li>
+            </ul>
+        </div>
+
+        <div class="error">
+            <strong>❌ Error: "[code=500] 设备离线" (Device offline)</strong>
+            <p><strong>Solution:</strong> This is expected behavior. The device is not currently connected to the network.</p>
+        </div>
+
+        <div class="error">
+            <strong>❌ Error: "[code=404] Not Found"</strong>
+            <p><strong>Solutions:</strong></p>
+            <ul>
+                <li>Check if the endpoint URL is correct</li>
+                <li>For sub-account APIs, this is expected as they're not available on the external API</li>
+                <li>Verify the resource exists before trying to access it</li>
+            </ul>
+        </div>
+
+        <h3>📊 Debugging Tips</h3>
+        <ul>
+            <li><strong>🔍 Check Browser Network Tab:</strong> Monitor actual HTTP requests and responses</li>
+            <li><strong>📝 Enable Django Logging:</strong> Check Django console for detailed error messages</li>
+            <li><strong>🔄 Test with cURL:</strong> Use command-line requests to isolate frontend issues</li>
+            <li><strong>🎯 Validate JSON:</strong> Ensure request bodies are valid JSON format</li>
+            <li><strong>⏱️ Check Timeouts:</strong> API has 12-second timeout, consider for long operations</li>
+        </ul>
+
+        <h3>🆕 Recent Updates & Fixes</h3>
+        <div class="info">
+            <p><strong>✅ Latest Improvements:</strong></p>
+            <ul>
+                <li><strong>Device Update API:</strong> Fixed field support - only <code>deviceName</code> and <code>oilName</code> are supported by external API</li>
+                <li><strong>Device Creation:</strong> Added flexible <code>/device/create/</code> endpoint with default values for easier development</li>
+                <li><strong>Group Delete API:</strong> Fixed and tested both main group and sub-group deletion endpoints - <strong>FULLY WORKING!</strong></li>
+                <li><strong>Dynamic Group Names:</strong> Implemented dynamic group naming system - no more hardcoded placeholder names!</li>
+                <li><strong>Group Update Functionality:</strong> Complete CRUD operations for device groups - create, read, update, delete!</li>
+                <li><strong>Location Dashboard:</strong> Added delete functionality with confirmation dialogs and UI updates</li>
+                <li><strong>Bulk Upload:</strong> Fixed CSV parsing bug for missing fields, improved error handling</li>
+                <li><strong>Field Validation:</strong> Updated documentation to reflect actual API capabilities</li>
+                <li><strong>Error Handling:</strong> Added specific error messages for unregistered device serial numbers</li>
+            </ul>
+            <p><strong>🔧 Key Changes:</strong></p>
+            <ul>
+                <li>Device location fields (address, city, province, lat, lng) cannot be updated after creation</li>
+                <li>Oil name updates require device name to be present in the same request</li>
+                <li>All device serial numbers must be pre-registered with external API</li>
+                <li>Bulk upload now handles missing CSV fields gracefully</li>
+            </ul>
+        </div>
+
+        <h3>📞 Support & Next Steps</h3>
+        <div class="success">
+            <p><strong>🎉 Ready to Integrate!</strong></p>
+            <p>You now have everything needed to integrate with the Aroma Tech API. Start with the login flow, then gradually add device management features to your frontend application.</p>
+            <p><strong>Pro Tips:</strong></p>
+            <ul>
+                <li>Store the token securely (consider using httpOnly cookies for production)</li>
+                <li>Implement automatic token refresh when it expires</li>
+                <li>Add loading states and proper error handling in your UI</li>
+                <li>Test with different device states (online/offline)</li>
+                <li>Use the batch control endpoint for multiple device operations</li>
+                <li>Use <code>/device/create/</code> for development, <code>/device/save/</code> for production</li>
+                <li>Always validate CSV files before bulk upload</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+            <h3>🚀 Happy Coding!</h3>
+            <p>This guide covers all available API endpoints and integration patterns. For questions about specific implementations or additional features, refer to the backend codebase or reach out to the development team.</p>
+            <p><em>Generated on: <span id="current-date"></span></em></p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString();
+    </script>
+</body>
+</html>

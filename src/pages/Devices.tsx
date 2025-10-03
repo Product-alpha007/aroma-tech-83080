@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Search, Filter, Plus, ChevronDown, ChevronUp, MapPin, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, Plus, ChevronDown, ChevronUp, MapPin, Edit, Trash2, Loader2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeviceCard } from "@/components/DeviceCard";
@@ -7,80 +7,46 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AddDeviceModal } from "@/components/AddDeviceModal";
-import { AddLocationModal } from "@/components/AddLocationModal";
 import { BulkOperationsModal } from "@/components/BulkOperationsModal";
-import { BulkScheduleModal } from "@/components/BulkScheduleModal";
-import { LocationManagerModal } from "@/components/LocationManagerModal";
+import { BulkDeviceUploadModal } from "@/components/BulkDeviceUploadModal";
 import { UserDeviceMappingModal } from "@/components/UserDeviceMappingModal";
+import { DeviceGroupManagerModal } from "@/components/DeviceGroupManagerModal";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { useLocations } from "@/contexts/LocationContext";
-
-interface Device {
-  id: string;
-  name: string;
-  deviceId: string;
-  status: "online" | "offline";
-  fuelLevel: number;
-  fuelRate: string;
-  location: string;
-}
-
-const initialDevicesData: Device[] = [
-  {
-    id: "1",
-    name: "Aryan Mittal's Room Diffuser",
-    deviceId: "273894643664",
-    status: "online",
-    fuelLevel: 70,
-    fuelRate: "10 mL/Hr",
-    location: "Location A",
-  },
-  {
-    id: "2",
-    name: "Office Reception Diffuser",
-    deviceId: "273894643665",
-    status: "online",
-    fuelLevel: 45,
-    fuelRate: "8 mL/Hr",
-    location: "Location A",
-  },
-  {
-    id: "3",
-    name: "Conference Room Diffuser",
-    deviceId: "273894643666",
-    status: "offline",
-    fuelLevel: 20,
-    fuelRate: "12 mL/Hr",
-    location: "Location B",
-  },
-  {
-    id: "4",
-    name: "Lobby Area Diffuser",
-    deviceId: "273894643667",
-    status: "online",
-    fuelLevel: 85,
-    fuelRate: "10 mL/Hr",
-    location: "Location B",
-  },
-  {
-    id: "5",
-    name: "Unmapped Device 1",
-    deviceId: "273894643668",
-    status: "online",
-    fuelLevel: 60,
-    fuelRate: "9 mL/Hr",
-    location: "unmapped",
-  },
-];
+import { useDevices, useSharedDevices } from "@/hooks/useDevices";
+import { useRealtimeDevices } from "@/hooks/useRealtimeDevices";
+import { Device } from "@/lib/api";
 
 export default function Devices() {
-  const [devices, setDevices] = useState<Device[]>(initialDevicesData);
-  const { locations, addLocation, updateLocation, removeLocation } = useLocations();
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 20;
+  
+  // Fetch devices from API
+  const { data: devicesResponse, isLoading, error } = useDevices(currentPage, pageSize);
+  const devices = devicesResponse?.data?.records || [];
+  
+  // Fetch shared devices
+  const { data: sharedDevicesResponse, isLoading: isLoadingShared } = useSharedDevices();
+  const sharedDevices = sharedDevicesResponse?.data || [];
+  const { locations, deviceGroupsWithDevices, isLoading: isLoadingGroups, addLocation, updateLocation, removeLocation, getDevicesByLocation } = useLocations();
+  
+  // Initialize real-time updates
+  const { isConnected } = useRealtimeDevices();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchType, setSearchType] = useState<"devices" | "locations">("devices");
   const [expandedLocations, setExpandedLocations] = useState<string[]>(["Location A", "Location B", "unmapped"]);
+  const [showDeviceGroupManager, setShowDeviceGroupManager] = useState(false);
+  
+  // Debug logging for modal state
+  console.log('🔍 Devices - showDeviceGroupManager:', showDeviceGroupManager);
+  
+  // Debug when state changes
+  useEffect(() => {
+    console.log('🔄 Devices - showDeviceGroupManager changed to:', showDeviceGroupManager);
+  }, [showDeviceGroupManager]);
   const { toast } = useToast();
+
 
   const toggleLocation = (location: string) => {
     setExpandedLocations(prev =>
@@ -91,16 +57,11 @@ export default function Devices() {
   };
 
   const handleAddDevice = (newDevice: { deviceId: string; name: string; location: string }) => {
-    const device: Device = {
-      id: Date.now().toString(),
-      name: newDevice.name,
-      deviceId: newDevice.deviceId,
-      status: "online",
-      fuelLevel: 100,
-      fuelRate: "10 mL/Hr",
-      location: newDevice.location,
-    };
-    setDevices(prev => [...prev, device]);
+    // This will be handled by the AddDeviceModal with API integration
+    toast({
+      title: "Device Added",
+      description: `${newDevice.name} has been added successfully`,
+    });
   };
 
   const handleAddLocation = (name: string) => {
@@ -112,11 +73,11 @@ export default function Devices() {
     const devices: Device[] = newDevices.map(device => ({
       id: Date.now().toString() + Math.random(),
       name: device.name,
-      deviceId: device.deviceId,
-      status: "online" as const,
-      fuelLevel: Math.floor(Math.random() * 100),
-      fuelRate: "10 mL/Hr",
-      location: device.location,
+      sn: device.deviceId,
+      status: "ONLINE" as const,
+      remainInfoTotal: 1000,
+      remainInfoCurrent: Math.floor(Math.random() * 1000),
+      remainInfoDay: 7,
     }));
     
     // Add new locations if they don't exist
@@ -129,53 +90,33 @@ export default function Devices() {
       setExpandedLocations(prev => [...prev, ...newLocations]);
     }
     
-    setDevices(prev => [...prev, ...devices]);
+    // Note: Devices will be refreshed automatically via the API
   };
 
-  const handleEditLocation = (oldName: string, newName: string) => {
-    updateLocation(oldName, newName);
-    setDevices(prev => prev.map(device => 
-      device.location === oldName ? { ...device, location: newName } : device
-    ));
-    setExpandedLocations(prev => prev.map(loc => loc === oldName ? newName : loc));
-  };
 
-  const handleDeleteLocation = (name: string) => {
-    removeLocation(name);
-    setDevices(prev => prev.map(device => 
-      device.location === name ? { ...device, location: "unmapped" } : device
-    ));
-    setExpandedLocations(prev => prev.filter(loc => loc !== name));
-  };
 
-  const handleMapDevice = (deviceId: string, location: string) => {
-    setDevices(prev => prev.map(device => 
-      device.id === deviceId ? { ...device, location } : device
-    ));
-    toast({
-      title: "Device Mapped",
-      description: `Device has been mapped to ${location}`,
-    });
-  };
-
-  const handleUnmapDevice = (deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
-    setDevices(prev => prev.map(device => 
-      device.id === deviceId ? { ...device, location: "unmapped" } : device
-    ));
-    toast({
-      title: "Device Unmapped",
-      description: `${device?.name} has been unmapped from its location`,
-    });
-  };
-
-  // Group devices by location
-  const devicesByLocation = devices.reduce((acc, device) => {
-    const location = device.location;
-    if (!acc[location]) {
-      acc[location] = [];
+  // Combine regular devices and shared devices
+  const allDevices = [...devices, ...sharedDevices];
+  
+  // Group devices by location using only device groups (API-based)
+  const devicesByLocation = locations.reduce((acc, location) => {
+    if (location === "Unmapped") {
+      // Find devices that are not in any group
+      const groupDeviceIds = (deviceGroupsWithDevices || []).flatMap(group => group.devices?.map(d => d.id) || []);
+      const unmappedDevices = allDevices.filter(device => {
+        const isInGroup = groupDeviceIds.includes(device.id);
+        return !isInGroup;
+      });
+      acc[location] = unmappedDevices;
+    } else {
+      // Find devices in this group only
+      const groupDeviceIds = getDevicesByLocation(location);
+      const groupDevices = allDevices.filter(device => {
+        const isInGroup = groupDeviceIds.includes(device.id);
+        return isInGroup;
+      });
+      acc[location] = groupDevices;
     }
-    acc[location].push(device);
     return acc;
   }, {} as Record<string, Device[]>);
 
@@ -201,7 +142,7 @@ export default function Devices() {
       Object.entries(devicesByLocation).forEach(([location, devices]) => {
         const filteredDevices = devices.filter(device =>
           device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          device.deviceId.toLowerCase().includes(searchQuery.toLowerCase())
+          device.sn.toLowerCase().includes(searchQuery.toLowerCase())
         );
         if (filteredDevices.length > 0) {
           result[location] = filteredDevices;
@@ -211,10 +152,6 @@ export default function Devices() {
     }
   };
 
-  const locationStats = locations.map(location => ({
-    name: location,
-    deviceCount: devicesByLocation[location]?.length || 0,
-  }));
 
   const filteredDevicesByLocation = filteredData();
   
@@ -225,22 +162,78 @@ export default function Devices() {
     return a.localeCompare(b);
   });
 
-  const unmappedDevices = devices.filter(device => device.location === "unmapped");
+
+  // Show loading state
+  if (isLoading || isLoadingShared || isLoadingGroups) {
+    return (
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-40 overflow-hidden">
+          <div className="container mx-auto px-6 py-4">
+            <h1 className="text-xl sm:text-2xl font-bold truncate">Devices & Locations</h1>
+          </div>
+        </header>
+        <main className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="flex items-center space-x-2">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <span>Loading devices...</span>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-40 overflow-hidden">
+          <div className="container mx-auto px-6 py-4">
+            <h1 className="text-xl sm:text-2xl font-bold truncate">Devices & Locations</h1>
+          </div>
+        </header>
+        <main className="container mx-auto px-6 py-8">
+          <div className="flex items-center justify-center py-12">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <h2 className="text-xl font-semibold mb-2">Failed to load devices</h2>
+              <p className="text-muted-foreground">Please try refreshing the page or contact support.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-40 overflow-hidden">
-        <div className="container mx-auto px-4 sm:px-6 py-4 max-w-full">
-          <div className="flex flex-col gap-4">
+    <div className="min-h-screen bg-background overflow-x-hidden smooth-scroll">
+      {/* Sticky Header */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-lg sticky top-0 z-40 shadow-sm">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            {/* Title and Status */}
             <div className="flex items-center justify-between">
-              <h1 className="text-xl sm:text-2xl font-bold truncate">Devices & Locations</h1>
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <h1 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">Devices & Locations</h1>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className={cn(
+                    "w-2 h-2 rounded-full",
+                    isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                  )} />
+                  <span className="text-xs text-muted-foreground hidden sm:inline">
+                    {isConnected ? "Live" : "Offline"}
+                  </span>
+                </div>
+              </div>
             </div>
             
             {/* Search and Filters */}
-            <div className="flex flex-col gap-3 w-full">
+            <div className="flex flex-col gap-2 sm:gap-3 w-full">
+              {/* Search Row */}
               <div className="flex items-center gap-2 w-full">
                 <Select value={searchType} onValueChange={(value: "devices" | "locations") => setSearchType(value)}>
-                  <SelectTrigger className="w-24 sm:w-28 flex-shrink-0">
+                  <SelectTrigger className="w-20 sm:w-24 lg:w-28 flex-shrink-0">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -255,27 +248,36 @@ export default function Devices() {
                     placeholder={`Search ${searchType}...`}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-full bg-background/50 border-border"
+                    className="pl-10 w-full bg-background/50 border-border text-sm sm:text-base"
                   />
                 </div>
               </div>
               
-              {/* Action Buttons - Scrollable on mobile */}
-              <div className="w-full overflow-x-auto hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
-                <div className="flex gap-2 min-w-max pr-4 sm:pr-0">
+              {/* Action Buttons - Horizontal Scroll on Mobile */}
+              <div className="w-full overflow-x-auto mobile-scroll -mx-3 px-3 sm:mx-0 sm:px-0">
+                <div className="flex gap-2 min-w-max pb-1 sm:pb-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      console.log('🖱️ Button clicked - setting showDeviceGroupManager to true');
+                      setShowDeviceGroupManager(true);
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    <span className="hidden sm:inline">Manage Groups</span>
+                    <span className="sm:hidden">Groups</span>
+                  </Button>
                   <UserDeviceMappingModal 
                     devices={devices} 
                     locations={locations}
                     onAddLocation={handleAddLocation}
                   />
-                  <BulkScheduleModal devices={devices} />
-                  <BulkOperationsModal onBulkUpload={handleBulkUpload} />
-                  <LocationManagerModal
-                    locations={locationStats}
-                    onEditLocation={handleEditLocation}
-                    onDeleteLocation={handleDeleteLocation}
-                  />
-                  <AddLocationModal onAddLocation={handleAddLocation} />
+                  <BulkDeviceUploadModal onDevicesAdded={() => {
+                    // The device list will automatically refresh due to React Query invalidation
+                  }} />
+                  {/* <BulkOperationsModal onBulkUpload={handleBulkUpload} /> */}
                   <AddDeviceModal
                     locations={locations}
                     onAddDevice={handleAddDevice}
@@ -288,40 +290,45 @@ export default function Devices() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-full">
-        <div className="space-y-8">
+      {/* Main Content with Smooth Scrolling */}
+      <main className="container mx-auto px-6 py-8">
+        <div className="space-y-4 sm:space-y-6 lg:space-y-8">
           {sortedLocations.map(([location, devices]) => (
             <div
               key={location}
               className={cn(
                 "border border-border rounded-lg overflow-hidden",
                 "bg-card/30 backdrop-blur-sm",
-                "animate-fade-in"
+                "transition-all duration-300 ease-in-out",
+                "hover:shadow-lg hover:shadow-primary/5"
               )}
             >
+              {/* Location Header */}
               <div
                 className={cn(
-                  "w-full px-4 sm:px-6 py-4 flex items-center justify-between",
-                  "hover:bg-card/50 transition-colors duration-200"
+                  "w-full px-3 sm:px-4 lg:px-6 py-3 sm:py-4 flex items-center justify-between",
+                  "hover:bg-card/50 transition-colors duration-200 cursor-pointer",
+                  "touch-manipulation touch-target" // Better touch response
                 )}
+                onClick={() => toggleLocation(location)}
               >
-                <button
-                  onClick={() => toggleLocation(location)}
-                  className="flex items-center gap-2 sm:gap-3 flex-1"
-                >
-                  <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                     {location === "unmapped" ? (
                       <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
                     ) : (
                       <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-primary flex-shrink-0" />
                     )}
                     <h2 className={cn(
-                      "text-base sm:text-lg font-semibold truncate",
+                      "text-sm sm:text-base lg:text-lg font-semibold truncate",
                       location === "unmapped" && "text-muted-foreground"
                     )}>
                       {location === "unmapped" ? "Unmapped Devices" : location}
                     </h2>
-                    <Badge variant={location === "unmapped" ? "outline" : "secondary"} className="flex-shrink-0">
+                    <Badge 
+                      variant={location === "unmapped" ? "outline" : "secondary"} 
+                      className="flex-shrink-0 text-xs"
+                    >
                       {devices.length}
                     </Badge>
                   </div>
@@ -330,36 +337,22 @@ export default function Devices() {
                   ) : (
                     <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 text-muted-foreground flex-shrink-0" />
                   )}
-                </button>
+                </div>
               </div>
 
+              {/* Devices Grid - Responsive */}
               {expandedLocations.includes(location) && (
-                <div className="px-4 sm:px-6 pb-6">
-                  {devices.length === 0 && location !== "unmapped" && unmappedDevices.length > 0 ? (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground mb-4">No devices in this location</p>
-                      <Select onValueChange={(deviceId) => handleMapDevice(deviceId, location)}>
-                        <SelectTrigger className="w-64 mx-auto">
-                          <SelectValue placeholder="Map an unmapped device" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unmappedDevices.map((device) => (
-                            <SelectItem key={device.id} value={device.id}>
-                              {device.name} (ID: {device.deviceId})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                <div className="px-3 sm:px-4 lg:px-6 pb-4 sm:pb-6">
+                  {devices.length === 0 ? (
+                    <div className="text-center py-6 sm:py-8">
+                      <p className="text-muted-foreground mb-4 text-sm sm:text-base">No devices in this location</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
                       {devices.map((device) => (
                         <DeviceCard 
                           key={device.id} 
                           device={device} 
-                          locations={locations}
-                          onMapDevice={handleMapDevice}
-                          onUnmapDevice={handleUnmapDevice}
                         />
                       ))}
                     </div>
@@ -369,19 +362,29 @@ export default function Devices() {
             </div>
           ))}
 
+          {/* Empty State */}
           {Object.keys(filteredDevicesByLocation).length === 0 && (
-            <div className="text-center py-12">
-              <MapPin className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-              <p className="text-xl text-muted-foreground mb-2">
+            <div className="text-center py-8 sm:py-12">
+              <MapPin className="w-12 h-12 sm:w-16 sm:h-16 mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg sm:text-xl text-muted-foreground mb-2">
                 No {searchType} found
               </p>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground max-w-md mx-auto">
                 {searchQuery ? `Try adjusting your search for "${searchQuery}"` : "Get started by adding your first device"}
               </p>
             </div>
           )}
         </div>
       </main>
+
+      {/* Device Group Manager Modal */}
+      <DeviceGroupManagerModal
+        open={showDeviceGroupManager}
+        onOpenChange={(open) => {
+          console.log('🔄 DeviceGroupManagerModal onOpenChange called with:', open);
+          setShowDeviceGroupManager(open);
+        }}
+      />
     </div>
   );
 }

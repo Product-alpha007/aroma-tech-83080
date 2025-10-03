@@ -48,27 +48,28 @@ export function AddLocationModal({ onAddLocation, trigger }: AddLocationModalPro
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="w-[95vw] sm:w-[90vw] md:w-[80vw] lg:w-[70vw] xl:w-[60vw] max-w-md">
         <DialogHeader>
-          <DialogTitle>Add New Location</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Add New Location</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="locationName">Location Name *</Label>
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+          <div className="space-y-1 sm:space-y-2">
+            <Label htmlFor="locationName" className="text-sm sm:text-base">Location Name *</Label>
             <Input
               id="locationName"
               value={locationName}
               onChange={(e) => setLocationName(e.target.value)}
               placeholder="Enter location name"
               required
+              className="text-sm sm:text-base"
             />
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex flex-col sm:flex-row justify-end gap-2 sm:gap-3 pt-3 sm:pt-4">
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto text-sm sm:text-base">
               Cancel
             </Button>
-            <Button type="submit">Add Location</Button>
+            <Button type="submit" className="w-full sm:w-auto text-sm sm:text-base">Add Location</Button>
           </div>
         </form>
       </DialogContent>
