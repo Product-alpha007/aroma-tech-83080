@@ -3,6 +3,8 @@
  * Provides mock location data for devices when location API is not available
  */
 
+import { Device, DeviceGroupWithDevices } from './api';
+
 // Dummy location data that matches the initial wireframes
 export const DUMMY_LOCATIONS = [
   "Main Office",
@@ -25,6 +27,107 @@ export const LOCATION_CATEGORIES = {
   service: ["Service Center", "Repair Shop", "Maintenance Hub"],
   other: ["Unmapped", "Unknown Location", "Temporary Location"]
 };
+
+// Mock devices for testing when API is unavailable
+export const MOCK_DEVICES: Device[] = [
+  {
+    id: '1',
+    name: 'Lobby Diffuser',
+    sn: 'AT-001-2024',
+    status: 'ONLINE',
+    oilName: 'Lavender Essential Oil',
+    location: 'Main Office',
+    address: 'Main Office Lobby',
+    city: 'New Delhi',
+    remainInfoCurrent: 75,
+    remainInfoTotal: 100,
+  },
+  {
+    id: '2',
+    name: 'Conference Room A',
+    sn: 'AT-002-2024',
+    status: 'ONLINE',
+    oilName: 'Eucalyptus Blend',
+    location: 'Main Office',
+    address: 'Conference Room A',
+    city: 'New Delhi',
+    remainInfoCurrent: 50,
+    remainInfoTotal: 100,
+  },
+  {
+    id: '3',
+    name: 'Reception Area',
+    sn: 'AT-003-2024',
+    status: 'OFFLINE',
+    oilName: 'Citrus Fresh',
+    location: 'Branch Office',
+    address: 'Reception',
+    city: 'Mumbai',
+    remainInfoCurrent: 25,
+    remainInfoTotal: 100,
+  },
+  {
+    id: '4',
+    name: 'Warehouse Entry',
+    sn: 'AT-004-2024',
+    status: 'ONLINE',
+    oilName: 'Peppermint',
+    location: 'Warehouse A',
+    address: 'Main Entry',
+    city: 'New Delhi',
+    remainInfoCurrent: 90,
+    remainInfoTotal: 100,
+  },
+  {
+    id: '5',
+    name: 'Retail Display',
+    sn: 'AT-005-2024',
+    status: 'ONLINE',
+    oilName: 'Vanilla Dream',
+    location: 'Retail Store 1',
+    address: 'Display Area',
+    city: 'Bangalore',
+    remainInfoCurrent: 60,
+    remainInfoTotal: 100,
+  },
+  {
+    id: '6',
+    name: 'Showroom Floor',
+    sn: 'AT-006-2024',
+    status: 'OFFLINE',
+    oilName: 'Ocean Breeze',
+    location: 'Showroom',
+    address: 'Main Floor',
+    city: 'Chennai',
+    remainInfoCurrent: 10,
+    remainInfoTotal: 100,
+  },
+];
+
+// Mock device groups for testing
+export const MOCK_DEVICE_GROUPS: DeviceGroupWithDevices[] = [
+  {
+    id: 'g1',
+    name: 'Main Office Devices',
+    type: 'main',
+    device_count: 2,
+    devices: MOCK_DEVICES.filter(d => d.location === 'Main Office'),
+  },
+  {
+    id: 'g2',
+    name: 'Warehouse Devices',
+    type: 'main',
+    device_count: 1,
+    devices: MOCK_DEVICES.filter(d => d.location === 'Warehouse A'),
+  },
+  {
+    id: 'g3',
+    name: 'Retail Devices',
+    type: 'sub',
+    device_count: 1,
+    devices: MOCK_DEVICES.filter(d => d.location === 'Retail Store 1'),
+  },
+];
 
 /**
  * Assigns a dummy location to a device based on its properties
