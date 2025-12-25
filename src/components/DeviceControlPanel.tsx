@@ -29,7 +29,7 @@ const DEVICE_COMMANDS = {
 export function DeviceControlPanel({ device, onClose }: DeviceControlPanelProps) {
   const [intensity, setIntensity] = useState(50);
   const [mode, setMode] = useState('continuous');
-  const [isPowered, setIsPowered] = useState(device.status === 'online');
+  const [isPowered, setIsPowered] = useState(device.status === 'ONLINE');
   
   const controlDevice = useControlDevice();
   const batchControl = useBatchControlDevices();
@@ -113,7 +113,7 @@ export function DeviceControlPanel({ device, onClose }: DeviceControlPanelProps)
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-semibold">{device.name}</CardTitle>
-          <Badge variant={device.status === 'online' ? 'default' : 'secondary'}>
+          <Badge variant={device.status === 'ONLINE' ? 'default' : 'secondary'}>
             {device.status}
           </Badge>
         </div>
