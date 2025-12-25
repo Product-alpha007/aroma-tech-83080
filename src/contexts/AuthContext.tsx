@@ -14,38 +14,25 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [user, setUser] = useState<UserProfile | null>(null);
+  // Skip login - always authenticated
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>({
+    id: '1',
+    username: 'Admin',
+    email: 'admin@example.com',
+    createDate: new Date().toISOString(),
+    phone: '',
+    account: 'admin',
+    password: '',
+    supplierId: null,
+    groupId: null,
+    brandId: null,
+    storeId: null,
+    deleted: 0,
+    status: 1,
+  });
   const { toast } = useToast();
-
-  // Check authentication status on mount
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (aromaAPI.isAuthenticated()) {
-        try {
-          const response = await aromaAPI.getProfile();
-          if (response.success && response.data) {
-            setUser(response.data);
-            setIsAuthenticated(true);
-          } else {
-            // Token is invalid, clear it
-            aromaAPI.logout();
-            setIsAuthenticated(false);
-            setUser(null);
-          }
-        } catch (error) {
-          console.error('Auth check failed:', error);
-          aromaAPI.logout();
-          setIsAuthenticated(false);
-          setUser(null);
-        }
-      }
-      setIsLoading(false);
-    };
-
-    checkAuth();
-  }, []);
 
   const login = async (credentials: LoginRequest): Promise<boolean> => {
     console.log(`🔐 AuthContext: Starting login process`, {

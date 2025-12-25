@@ -41,7 +41,7 @@ export function useDeviceGroupDetail(groupId: string) {
   return useQuery({
     queryKey: deviceGroupKeys.detail(groupId),
     queryFn: async () => {
-      const response = await aromaAPI.getDeviceGroupDetail(groupId);
+      const response = await aromaAPI.getDeviceGroupDetails(groupId);
       if (response.success && response.data) {
         return response.data;
       }
@@ -119,7 +119,7 @@ export function useUpdateDeviceGroup() {
           ...old,
           groups: old.groups.map((group: any) => 
             group.id === request.id 
-              ? { ...group, name: request.name, description: request.description }
+              ? { ...group, name: request.name }
               : group
           )
         };
@@ -131,7 +131,7 @@ export function useUpdateDeviceGroup() {
           ...old,
           records: old.records?.map((group: any) => 
             group.id === request.id 
-              ? { ...group, name: request.name, description: request.description }
+              ? { ...group, name: request.name }
               : group
           ) || old.records
         };

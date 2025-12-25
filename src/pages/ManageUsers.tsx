@@ -77,7 +77,8 @@ export default function ManageUsers() {
       setLoading(true);
       const response = await aromaAPI.getSubAccounts();
       if (response.success && response.data) {
-        setUsers(response.data);
+        const usersData = Array.isArray(response.data) ? response.data : response.data.data;
+        setUsers(usersData || []);
       } else {
         toast({
           title: "Error",
@@ -103,8 +104,7 @@ export default function ManageUsers() {
   }, [fetchUsers]);
 
   const filteredUsers = users.filter(user => {
-    const matchesSearch = (user.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         (user.account || '').toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = (user.account || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -344,13 +344,13 @@ export default function ManageUsers() {
                       "w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0",
                       "bg-gradient-to-br from-primary to-primary-glow text-primary-foreground font-semibold text-sm sm:text-lg"
                     )}>
-                        {(user.name || (user.account ? user.account.split('@')[0] : '') || 'U').split(' ').map((n: string) => n[0]).join('')}
+                        {((user.account ? user.account.split('@')[0] : '') || 'U').split(' ').map((n: string) => n[0]).join('')}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
-                          <h3 className="font-semibold text-base sm:text-lg truncate">{user.name || (user.account ? user.account.split('@')[0] : '') || 'Unknown User'}</h3>
-                        <Badge variant={user.status === "active" ? "default" : "secondary"} className="w-fit">
-                          {user.status || "active"}
+                          <h3 className="font-semibold text-base sm:text-lg truncate">{(user.account ? user.account.split('@')[0] : '') || 'Unknown User'}</h3>
+                        <Badge variant={user.status === 1 ? "default" : "secondary"} className="w-fit">
+                          {user.status === 1 ? 'active' : 'inactive'}
                         </Badge>
                       </div>
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
@@ -452,25 +452,10 @@ export default function ManageUsers() {
                               <Share2 className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                               <span className="text-muted-foreground">Name:</span>
                           </div>
-                            <span className="font-medium truncate">{user.name || (user.account ? user.account.split('@')[0] : '') || 'Unknown'}</span>
+                            <span className="font-medium truncate">{(user.account ? user.account.split('@')[0] : '') || 'Unknown'}</span>
                           </div>
                       </div>
                     </div>
-                    {user.permissions && user.permissions.length > 0 && (
-                      <div className="mt-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Shield className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Permissions:</span>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {user.permissions.map((perm: string) => (
-                            <Badge key={perm} variant="secondary" className="capitalize">
-                              {perm}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -583,7 +568,7 @@ export default function ManageUsers() {
           <DialogHeader>
             <DialogTitle>Remove User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove {selectedUser?.name}? This action cannot be undone.
+              Are you sure you want to remove {selectedUser?.account}? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

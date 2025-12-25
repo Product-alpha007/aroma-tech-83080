@@ -56,7 +56,7 @@ export function DeviceGroupManagerModal({ open, onOpenChange }: DeviceGroupManag
   useEffect(() => {
     if (editingGroup) {
       setGroupName(editingGroup.name);
-      setGroupDescription(editingGroup.description || "");
+      setGroupDescription("");
       setSelectedDevices(editingGroup.devices?.map(d => d.id) || []);
     }
   }, [editingGroup]);
@@ -109,7 +109,7 @@ export function DeviceGroupManagerModal({ open, onOpenChange }: DeviceGroupManag
 
     const request: DeviceGroupUpdateRequest = {
       name: groupName.trim(),
-      parentGroupId: editingGroup.parentGroupId || "",
+      parentGroupId: "",
       deviceIds: selectedDevices,
       clean: true,
       id: editingGroup.id,
@@ -320,8 +320,8 @@ export function DeviceGroupManagerModal({ open, onOpenChange }: DeviceGroupManag
                   <div key={group.id} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="space-y-1">
                       <h4 className="font-medium">{group.name}</h4>
-                      {group.description && (
-                        <p className="text-sm text-muted-foreground">{group.description}</p>
+                      {groupDescription && editingGroup?.id === group.id && (
+                        <p className="text-sm text-muted-foreground">{groupDescription}</p>
                       )}
                       <p className="text-xs text-muted-foreground">
                         {group.device_count || group.devices?.length || 0} devices
